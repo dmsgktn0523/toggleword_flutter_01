@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'new_word_page.dart';
 
-
-
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -14,7 +12,7 @@ class MyApp extends StatelessWidget {
         length: 2,
         child: Scaffold(
           appBar: AppBar(
-            title: Text('Toggle Word❤️'),
+            title: Text('Toggle Word'),
             bottom: TabBar(
               tabs: [
                 Tab(text: '단어장'),
@@ -33,6 +31,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 class VocabularyList extends StatefulWidget {
   @override
   _VocabularyListState createState() => _VocabularyListState();
@@ -47,8 +46,7 @@ class _VocabularyListState extends State<VocabularyList> {
       appBar: AppBar(
         actions: <Widget>[
           Container(
-            // color: Colors.blueGrey[100],  // 토글 스위치의 배경색
-            padding: EdgeInsets.only(right: 20.0),  // 오른쪽 패딩
+            padding: EdgeInsets.only(right: 20.0),
             child: Switch(
               value: _isToggled,
               onChanged: (value) {
@@ -90,7 +88,6 @@ class _VocabularyListState extends State<VocabularyList> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // Navigator.push를 사용하여 새 페이지로 이동
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => NewWordPage()),
@@ -114,42 +111,32 @@ class _VocabularyListState extends State<VocabularyList> {
     );
   }
 }
-class DictionaryScreen extends StatelessWidget {
+
+class CustomWebView extends StatefulWidget {
+  const CustomWebView({Key? key}) : super(key: key);
+
+  @override
+  _CustomWebViewState createState() => _CustomWebViewState();
+}
+
+class _CustomWebViewState extends State<CustomWebView> {
+  late WebViewController _controller;
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: Center(
-            child: Text('영어사전 화면'),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                onPressed: () {},
-                child: Text('버튼 1'),
-              ),
-              ElevatedButton(
-                onPressed: () {},
-                child: Text('버튼 2'),
-              ),
-              ElevatedButton(
-                onPressed: () {},
-                child: Text('버튼 3'),
-              ),
-              ElevatedButton(
-                onPressed: () {},
-                child: Text('버튼 4'),
-              ),
-            ],
-          ),
-        ),
-      ],
+    return WebView(
+      initialUrl: 'https://en.dict.naver.com/#/main',
+      javascriptMode: JavascriptMode.unrestricted,
+      onWebViewCreated: (WebViewController webViewController) {
+        _controller = webViewController;
+      },
     );
   }
 }
 
+class DictionaryScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return CustomWebView();
+  }
+}
