@@ -5,6 +5,8 @@ import 'new_word_page.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
+  final List<Map<String, String>> words = [];
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -22,7 +24,7 @@ class MyApp extends StatelessWidget {
           ),
           body: TabBarView(
             children: [
-              VocabularyList(),
+              VocabularyList(words: words),
               DictionaryScreen(),
             ],
           ),
@@ -32,7 +34,13 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
+
 class VocabularyList extends StatefulWidget {
+  final List<Map<String, String>> words;
+
+  VocabularyList({Key? key, required this.words}) : super(key: key);
+
   @override
   _VocabularyListState createState() => _VocabularyListState();
 }
@@ -64,11 +72,11 @@ class _VocabularyListState extends State<VocabularyList> {
         children: [
           Expanded(
             child: ListView.builder(
-              itemCount: 10,
+              itemCount: widget.words.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text('단어 $index'),
-                  subtitle: Text('설명 $index'),
+                  title: Text(widget.words[index]['word'] ?? ''),
+                  subtitle: Text(widget.words[index]['meaning'] ?? ''),
                 );
               },
             ),
@@ -90,7 +98,12 @@ class _VocabularyListState extends State<VocabularyList> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => NewWordPage()),
+                      MaterialPageRoute(builder: (context) => NewWordPage(onAddWord: (word) {
+                        setState(() {
+                          widget.words.add(word);
+                        });
+                        Navigator.pop(context);
+                      })),
                     );
                   },
                   child: Text('+단어'),
@@ -112,9 +125,9 @@ class _VocabularyListState extends State<VocabularyList> {
   }
 }
 
-class CustomWebView extends StatefulWidget {
-  const CustomWebView({Key? key}) : super(key: key);
 
+
+class CustomWebView extends StatefulWidget {
   @override
   _CustomWebViewState createState() => _CustomWebViewState();
 }
