@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 
 class NewWordPage extends StatefulWidget {
-  final Function(Map<String, String>) onAddWord;
+  final Function(String, String) onAddWord; // 인자 타입을 (Map<String, String>)에서 (String, String)로 변경
 
   NewWordPage({Key? key, required this.onAddWord}) : super(key: key);
 
@@ -158,10 +158,9 @@ class _NewWordPageState extends State<NewWordPage> {
         ),
         ElevatedButton(
           onPressed: () {
-            widget.onAddWord({
-              'word': wordController.text,
-              'meaning': translationController.text
-            });
+            final word = wordController.text;
+            final meaning = translationController.text;
+            widget.onAddWord(word, meaning);
             final snackBar = SnackBar(content: Text(' ${wordController.text}추가 완료 ✅'),
                 duration: Duration(milliseconds: 500), // Set duration to 0.5 seconds
             );
