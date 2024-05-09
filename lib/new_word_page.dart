@@ -12,6 +12,9 @@ class NewWordPage extends StatefulWidget {
 }
 
 class _NewWordPageState extends State<NewWordPage> {
+
+
+
   final TextEditingController _wordController = TextEditingController();
   final TextEditingController _translationController = TextEditingController();
   final TextEditingController _multiWordController = TextEditingController();
@@ -164,10 +167,10 @@ class _NewWordPageState extends State<NewWordPage> {
             final meaning = translationController.text.trim();
 
             if (word.isEmpty) {
-              showSnackbar('단어를 입력해주세요! ⚠️');
+              showSnackbar('단어를 입력해주세요! ⚠️', 1000);
             } else {
               widget.onAddWord(word, meaning);
-              showSnackbar('${word} 추가 완료 ✅');
+              showSnackbar('${word} 추가 완료 ✅',500);
               wordController.clear();
               translationController.clear();
             }
@@ -181,13 +184,12 @@ class _NewWordPageState extends State<NewWordPage> {
     );
   }
 
-  void showSnackbar(String message) {
-    // 키보드의 높이를 구합니다.
+  void showSnackbar(String message, int durationMillis) {  // durationMillis 파라미터 추가
     var keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          duration: Duration(seconds: 2),
+          duration: Duration(milliseconds: durationMillis),  // milliseconds를 사용하여 지속 시간 설정
           behavior: SnackBarBehavior.floating,
           margin: EdgeInsets.only(
               bottom: keyboardHeight + 16, // 기본 마진에 키보드 높이를 추가합니다.
@@ -197,6 +199,7 @@ class _NewWordPageState extends State<NewWordPage> {
         )
     );
   }
+
 
 
 

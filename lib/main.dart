@@ -43,6 +43,7 @@ class MyApp extends StatelessWidget {
 class VocabularyList extends StatefulWidget {
   final List<Map<String, String>> words;
 
+
   VocabularyList({Key? key, required this.words}) : super(key: key);
 
   @override
@@ -51,6 +52,7 @@ class VocabularyList extends StatefulWidget {
 
 class _VocabularyListState extends State<VocabularyList> {
   late Database _database;
+  bool _isToggled = false;
 
   Future<Database> initializeDB() async {
     String path = join(await getDatabasesPath(), 'word_database.db');
@@ -104,8 +106,6 @@ class _VocabularyListState extends State<VocabularyList> {
     super.dispose();
   }
 
-  bool _isToggled = false;
-
 
 
   @override
@@ -117,9 +117,9 @@ class _VocabularyListState extends State<VocabularyList> {
             padding: EdgeInsets.only(right: 20.0),
             child: Switch(
               value: _isToggled,
-              onChanged: (value) {
+              onChanged: (bool value) {
                 setState(() {
-                  _isToggled = value;
+                  _isToggled = value;  // 토글 상태 업데이트
                 });
               },
               activeColor: Colors.white,
@@ -141,10 +141,16 @@ class _VocabularyListState extends State<VocabularyList> {
                     subtitle: Text('This word has no ID.'),
                   );
                 }
-                final int id = int.parse(idString); // Convert 'id' back to int before using
+                final int id = int.parse(idString);  // Convert 'id' back to int before using
                 return ListTile(
                   title: Text(widget.words[index]['word'] ?? ''),
-                  subtitle: Text(widget.words[index]['meaning'] ?? ''),
+                  subtitle: Text(widget.words[index]['meaning'] ?? '',
+                      style: TextStyle(
+                          color: _isToggled ? Colors.transparent : Colors.black,
+                          backgroundColor: _isToggled ? Colors.purple[100] : Colors.transparent),  // 배경색 변경
+
+                  ),
+
                   onLongPress: () {
                     showDialog(
                       context: context,
@@ -154,7 +160,7 @@ class _VocabularyListState extends State<VocabularyList> {
                         actions: <Widget>[
                           TextButton(
                             child: Text('Cancel'),
-                            onPressed: () => Navigator.of(context).pop(),
+                            onPressed: () => Navigator.of(context). pop(),
                           ),
                           TextButton(
                             child: Text('Delete'),
@@ -169,7 +175,7 @@ class _VocabularyListState extends State<VocabularyList> {
                   },
                 );
               },
-      )
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
