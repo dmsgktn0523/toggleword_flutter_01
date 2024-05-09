@@ -158,16 +158,19 @@ class _NewWordPageState extends State<NewWordPage> {
         ),
         ElevatedButton(
           onPressed: () {
-            final word = wordController.text;
-            final meaning = translationController.text;
-            widget.onAddWord(word, meaning);
-            final snackBar = SnackBar(content: Text(' ${wordController.text}추가 완료 ✅'),
-                duration: Duration(milliseconds: 500), // Set duration to 0.5 seconds
-            );
+            // 키보드 감추기
+            // FocusScope.of(context).unfocus();
+            final word = wordController.text.trim();
+            final meaning = translationController.text.trim();
 
-            ScaffoldMessenger.of(context).showSnackBar(snackBar);
-            wordController.clear();
-            translationController.clear();
+            if (word.isEmpty) {
+              showSnackbar('단어를 입력해주세요! ⚠️');
+            } else {
+              widget.onAddWord(word, meaning);
+              showSnackbar('${word} 추가 완료 ✅');
+              wordController.clear();
+              translationController.clear();
+            }
           },
           child: Text('단어 추가', style: TextStyle(color: Colors.white)),
           style: ButtonStyle(
@@ -178,13 +181,33 @@ class _NewWordPageState extends State<NewWordPage> {
     );
   }
 
+  void showSnackbar(String message) {
+    // 키보드의 높이를 구합니다.
+    var keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+              bottom: keyboardHeight + 16, // 기본 마진에 키보드 높이를 추가합니다.
+              left: 16,
+              right: 16
+          ),
+        )
+    );
+  }
+
+
+
+
   void translateWord(String word, TextEditingController translationController) async {
     try {
       final response = await http.get(Uri.parse("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=0&ie=utf8&query=$word+%EB%9C%BB"));
       var document = parse(response.body);
       var translation = document.querySelector("p.mean.api_txt_lines")?.text;
       setState(() {
-        translationController.text = translation ?? "Translation not found.";
+        translationController.text = translation ?? " ";
       });
     } catch (e) {
       setState(() {

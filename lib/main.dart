@@ -75,13 +75,14 @@ class _VocabularyListState extends State<VocabularyList> {
   }
 
   Future<void> _loadWords() async {
-    final words = await _database.query('words');
+    final List<Map<String, dynamic>> queryResults = await _database.query('words');
     setState(() {
       widget.words.clear();
-      widget.words.addAll(words.map((e) => Map.fromEntries([
-        MapEntry('word', e['word'] as String),
-        MapEntry('meaning', e['meaning'] as String),
-      ])));
+      widget.words.addAll(queryResults.map((e) => {
+        'id': e['id'].toString(), // Convert int to String if the 'id' is expected as String elsewhere
+        'word': e['word'] as String,
+        'meaning': e['meaning'] as String,
+      }).toList());
     });
   }
 
@@ -94,6 +95,7 @@ class _VocabularyListState extends State<VocabularyList> {
     await _database.delete('words', where: 'id = ?', whereArgs: [id]);
     _loadWords();
   }
+
 
 
   @override
@@ -132,12 +134,42 @@ class _VocabularyListState extends State<VocabularyList> {
             child: ListView.builder(
               itemCount: widget.words.length,
               itemBuilder: (context, index) {
+                final String? idString = widget.words[index]['id'];
+                if (idString == null) {
+                  return ListTile(
+                    title: Text('No ID found'),
+                    subtitle: Text('This word has no ID.'),
+                  );
+                }
+                final int id = int.parse(idString); // Convert 'id' back to int before using
                 return ListTile(
                   title: Text(widget.words[index]['word'] ?? ''),
                   subtitle: Text(widget.words[index]['meaning'] ?? ''),
+                  onLongPress: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Delete Word'),
+                        content: Text('Are you sure you want to delete this word?'),
+                        actions: <Widget>[
+                          TextButton(
+                            child: Text('Cancel'),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          TextButton(
+                            child: Text('Delete'),
+                            onPressed: () {
+                              _deleteWord(id);  // Ensure _deleteWord expects an int
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 );
               },
-            ),
+      )
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
