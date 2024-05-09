@@ -88,21 +88,20 @@ class _VocabularyListState extends State<VocabularyList> {
               children: [
                 ElevatedButton(
                   onPressed: () {},
-                  child: Text('버튼 1'),
+                  child: Text('정렬'),
                 ),
                 ElevatedButton(
                   onPressed: () {},
-                  child: Text('버튼 2'),
+                  child: Text('설정'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: ()  {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => NewWordPage(onAddWord: (word) {
                         setState(() {
                           widget.words.add(word);
                         });
-                        Navigator.pop(context);
                       })),
                     );
                   },
@@ -114,7 +113,7 @@ class _VocabularyListState extends State<VocabularyList> {
                 ),
                 ElevatedButton(
                   onPressed: () {},
-                  child: Text('버튼 4'),
+                  child: Text('편집'),
                 ),
               ],
             ),
