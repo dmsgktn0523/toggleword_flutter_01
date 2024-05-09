@@ -22,6 +22,7 @@ class _NewWordPageState extends State<NewWordPage> {
     return DefaultTabController(
       length: 2, // 두 개의 탭
       child: Scaffold(
+        resizeToAvoidBottomInset: false,  // Add this line to prevent UI adjustments
         appBar: AppBar(
           title: Text('단어 추가'),
           bottom: TabBar(
@@ -42,80 +43,104 @@ class _NewWordPageState extends State<NewWordPage> {
   }
 
   Widget simpleAddTab() {
-    return Center(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 50.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            TextField(
-              controller: _wordController,
-              decoration: InputDecoration(
-                labelText: '단어 입력',
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.search),
-                  onPressed: () {
-                    if (_wordController.text.isNotEmpty) {
-                      translateWord(_wordController.text, _translationController);
-                    }
-                  },
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        // Calculate 10% of the screen height
+        double topPadding = MediaQuery.of(context).size.height * 0.1;
+
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(top: topPadding),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 50.0),
+                  child: TextField(
+                    controller: _wordController,
+                    decoration: InputDecoration(
+                      labelText: '단어 입력',
+                      suffixIcon: IconButton(
+                        icon: Icon(Icons.search),
+                        onPressed: () {
+                          if (_wordController.text.isNotEmpty) {
+                            translateWord(_wordController.text, _translationController);
+                          }
+                        },
+                      ),
+                      border: UnderlineInputBorder(),
+                    ),
+                  ),
                 ),
-                border: UnderlineInputBorder(),
-              ),
+                SizedBox(height: 50),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 50.0),
+                  child: TextField(
+                    controller: _translationController,
+                    decoration: InputDecoration(
+                      labelText: "단어의 뜻",
+                      border: UnderlineInputBorder(),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                actionButtons(_wordController, _translationController),
+              ],
             ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _translationController,
-              decoration: InputDecoration(
-                labelText: "단어의 뜻",
-                border: UnderlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 40),
-            actionButtons(_wordController, _translationController)
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
+
+
+
   Widget multiAddTab() {
-    return Center(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 50.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            TextField(
-              controller: _multiWordController,
-              decoration: InputDecoration(
-                labelText: '여러 단어 입력',
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.search),
-                  onPressed: () {
-                    if (_multiWordController.text.isNotEmpty) {
-                      translateWord(_multiWordController.text, _multiTranslationController);
-                    }
-                  },
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        // Calculate 50% of the screen height
+        double topPadding = MediaQuery.of(context).size.height * 0.1;
+
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(top: topPadding, left: 50.0, right: 50.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start, // Changed to start to respect top padding
+              children: <Widget>[
+                TextField(
+                  controller: _multiWordController,
+                  decoration: InputDecoration(
+                    labelText: '여러 단어 입력',
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.search),
+                      onPressed: () {
+                        if (_multiWordController.text.isNotEmpty) {
+                          translateWord(_multiWordController.text, _multiTranslationController);
+                        }
+                      },
+                    ),
+                    border: UnderlineInputBorder(),
+                  ),
                 ),
-                border: UnderlineInputBorder(),
-              ),
+                SizedBox(height: 20),
+                TextField(
+                  controller: _multiTranslationController,
+                  decoration: InputDecoration(
+                    labelText: "단어의 뜻",
+                    border: UnderlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 40),
+                actionButtons(_multiWordController, _multiTranslationController)
+              ],
             ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _multiTranslationController,
-              decoration: InputDecoration(
-                labelText: "단어의 뜻",
-                border: UnderlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 40),
-            actionButtons(_multiWordController, _multiTranslationController)
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
+
 
   Widget actionButtons(TextEditingController wordController, TextEditingController translationController) {
     return Row(
@@ -137,6 +162,11 @@ class _NewWordPageState extends State<NewWordPage> {
               'word': wordController.text,
               'meaning': translationController.text
             });
+            final snackBar = SnackBar(content: Text(' ${wordController.text}추가 완료 ✅'),
+                duration: Duration(milliseconds: 500), // Set duration to 0.5 seconds
+            );
+
+            ScaffoldMessenger.of(context).showSnackBar(snackBar);
             wordController.clear();
             translationController.clear();
           },
