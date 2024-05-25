@@ -4,18 +4,16 @@ import 'new_word_page.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
-
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   final List<Map<String, String>> words = [];
 
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: DefaultTabController(
-        length: 2, // webview 잠시 disable 하단 세 개!!
+        length: 2,
         child: Scaffold(
           appBar: AppBar(
             title: Text('Toggle Word'),
@@ -38,11 +36,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
-
 class VocabularyList extends StatefulWidget {
   final List<Map<String, String>> words;
-
 
   VocabularyList({Key? key, required this.words}) : super(key: key);
 
@@ -81,7 +76,7 @@ class _VocabularyListState extends State<VocabularyList> {
     setState(() {
       widget.words.clear();
       widget.words.addAll(queryResults.map((e) => {
-        'id': e['id'].toString(), // Convert int to String if the 'id' is expected as String elsewhere
+        'id': e['id'].toString(),
         'word': e['word'] as String,
         'meaning': e['meaning'] as String,
       }).toList());
@@ -90,7 +85,7 @@ class _VocabularyListState extends State<VocabularyList> {
 
   Future<void> _addWord(String word, String meaning) async {
     await _database.insert('words', {'word': word, 'meaning': meaning});
-    _loadWords(); // 단어를 추가한 후 _loadWords를 호출합니다.
+    _loadWords();
   }
 
   Future<void> _deleteWord(int id) async {
@@ -98,15 +93,11 @@ class _VocabularyListState extends State<VocabularyList> {
     _loadWords();
   }
 
-
-
   @override
   void dispose() {
-    _database.close(); // 데이터베이스 연결 닫기
+    _database.close();
     super.dispose();
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +110,7 @@ class _VocabularyListState extends State<VocabularyList> {
               value: _isToggled,
               onChanged: (bool value) {
                 setState(() {
-                  _isToggled = value;  // 토글 상태 업데이트
+                  _isToggled = value;
                 });
               },
               activeColor: Colors.white,
@@ -141,16 +132,42 @@ class _VocabularyListState extends State<VocabularyList> {
                     subtitle: Text('This word has no ID.'),
                   );
                 }
-                final int id = int.parse(idString);  // Convert 'id' back to int before using
+                final int id = int.parse(idString);
+
                 return ListTile(
                   title: Text(widget.words[index]['word'] ?? ''),
-                  subtitle: Text(widget.words[index]['meaning'] ?? '',
-                      style: TextStyle(
-                          color: _isToggled ? Colors.transparent : Colors.black,
-                          backgroundColor: _isToggled ? Colors.purple[100] : Colors.transparent),  // 배경색 변경
+                  subtitle: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // 텍스트의 크기를 측정
+                      TextSpan span = TextSpan(
+                        text: widget.words[index]['meaning'] ?? '',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      );
 
+                      TextPainter tp = TextPainter(
+                        text: span,
+                        textDirection: TextDirection.ltr,
+                      );
+
+                      tp.layout(maxWidth: constraints.maxWidth);
+
+                      return Stack(
+                        children: [
+                          RichText(
+                            text: span,
+                          ),
+                          if (_isToggled)
+                            Container(
+                              width: tp.size.width,
+                              height: tp.size.height + 2,
+                              color: Colors.purple[100],
+                            ),
+                        ],
+                      );
+                    },
                   ),
-
                   onLongPress: () {
                     showDialog(
                       context: context,
@@ -160,12 +177,12 @@ class _VocabularyListState extends State<VocabularyList> {
                         actions: <Widget>[
                           TextButton(
                             child: Text('Cancel'),
-                            onPressed: () => Navigator.of(context). pop(),
+                            onPressed: () => Navigator.of(context).pop(),
                           ),
                           TextButton(
                             child: Text('Delete'),
                             onPressed: () {
-                              _deleteWord(id);  // Ensure _deleteWord expects an int
+                              _deleteWord(id);
                               Navigator.of(context).pop();
                             },
                           ),
@@ -174,6 +191,7 @@ class _VocabularyListState extends State<VocabularyList> {
                     );
                   },
                 );
+
               },
             ),
           ),
@@ -197,7 +215,7 @@ class _VocabularyListState extends State<VocabularyList> {
                       MaterialPageRoute(
                         builder: (context) => NewWordPage(
                           onAddWord: (word, meaning) {
-                            _addWord(word, meaning); // _addWord 메서드 직접 호출
+                            _addWord(word, meaning);
                           },
                         ),
                       ),
@@ -221,8 +239,6 @@ class _VocabularyListState extends State<VocabularyList> {
     );
   }
 }
-
-
 
 class CustomWebView extends StatefulWidget {
   @override
@@ -250,4 +266,3 @@ class DictionaryScreen extends StatelessWidget {
     return CustomWebView();
   }
 }
-
