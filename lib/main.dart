@@ -15,19 +15,23 @@ class MyApp extends StatelessWidget {
       home: DefaultTabController(
         length: 2,
         child: Scaffold(
-          appBar: AppBar(
-            title: Text('Toggle Word'),
-            bottom: TabBar(
-              tabs: [
-                Tab(text: '단어장'),
-                Tab(text: '영어사전'),
-              ],
-            ),
-          ),
-          body: TabBarView(
+          body: Column(
             children: [
-              VocabularyList(words: words),
-              DictionaryScreen(),
+              SizedBox(height: 20), // 20px 마진
+              TabBar(
+                tabs: [
+                  Tab(text: '단어장'),
+                  Tab(text: '영어사전'),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    VocabularyList(words: words),
+                    DictionaryScreen(),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -104,21 +108,30 @@ class _VocabularyListState extends State<VocabularyList> {
     return Scaffold(
       appBar: AppBar(
         actions: <Widget>[
-          Container(
+          Padding(
             padding: EdgeInsets.only(right: 20.0),
-            child: Switch(
-              value: _isToggled,
-              onChanged: (bool value) {
-                setState(() {
-                  _isToggled = value;
-                });
-              },
-              activeColor: Colors.white,
-              activeTrackColor: Colors.deepPurple,
+            child: Row(
+              children: <Widget>[
+                Text(
+                  'toggle',
+                  style: TextStyle(color: Colors.black),
+                ),
+                Switch(
+                  value: _isToggled,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _isToggled = value;
+                    });
+                  },
+                  activeColor: Colors.white,
+                  activeTrackColor: Colors.deepPurple,
+                ),
+              ],
             ),
           ),
         ],
       ),
+
       body: Column(
         children: [
           Expanded(
@@ -161,7 +174,7 @@ class _VocabularyListState extends State<VocabularyList> {
                           if (_isToggled)
                             Container(
                               width: tp.size.width,
-                              height: tp.size.height + 2,
+                              height: tp.size.height ,
                               color: Colors.purple[100],
                             ),
                         ],
