@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_switch/flutter_switch.dart';
+import 'package:toggleworld_flutter_01/word_list_library.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'new_word_page.dart';
 import 'package:sqflite/sqflite.dart';
@@ -6,34 +8,50 @@ import 'package:path/path.dart';
 
 void main() => runApp(MyApp());
 
-class MyApp extends StatelessWidget {
-  final List<Map<String, String>> words = [];
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  int _currentIndex = 0;
+  final PageController _pageController = PageController();
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: DefaultTabController(
-        length: 2,
-        child: Scaffold(
-          body: Column(
-            children: [
-              SizedBox(height: 20), // 20px 마진
-              TabBar(
-                tabs: [
-                  Tab(text: '단어장'),
-                  Tab(text: '영어사전'),
-                ],
-              ),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    VocabularyList(words: words),
-                    DictionaryScreen(),
-                  ],
-                ),
-              ),
-            ],
-          ),
+      home: Scaffold(
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          children: [
+            VocabularyList(),
+            DictionaryScreen(),
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+              _pageController.animateToPage(index,
+                  duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+            });
+          },
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.book),
+              label: '단어장',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              label: '영어사전',
+            ),
+          ],
         ),
       ),
     );
@@ -41,15 +59,12 @@ class MyApp extends StatelessWidget {
 }
 
 class VocabularyList extends StatefulWidget {
-  final List<Map<String, String>> words;
-
-  VocabularyList({Key? key, required this.words}) : super(key: key);
-
   @override
   _VocabularyListState createState() => _VocabularyListState();
 }
 
 class _VocabularyListState extends State<VocabularyList> {
+  final List<Map<String, String>> words = [];
   late Database _database;
   bool _isToggled = false;
 
@@ -78,8 +93,8 @@ class _VocabularyListState extends State<VocabularyList> {
   Future<void> _loadWords() async {
     final List<Map<String, dynamic>> queryResults = await _database.query('words');
     setState(() {
-      widget.words.clear();
-      widget.words.addAll(queryResults.map((e) => {
+      words.clear();
+      words.addAll(queryResults.map((e) => {
         'id': e['id'].toString(),
         'word': e['word'] as String,
         'meaning': e['meaning'] as String,
@@ -107,38 +122,72 @@ class _VocabularyListState extends State<VocabularyList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => WordListLibrary(),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(-1.0, 0.0); // 오른쪽에서 왼쪽으로 애니메이션
+                  const end = Offset.zero;
+                  const curve = Curves.easeInOut;
+
+                  var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+                  return SlideTransition(
+                    position: animation.drive(tween),
+                    child: child,
+                  );
+                },
+              ),
+            );
+          },
+          child: Row(
+            children: [
+              Icon(Icons.arrow_back, color: Colors.black),
+              SizedBox(width: 30.0),
+              Text(
+                '단어장',
+                style: TextStyle(color: Colors.black),
+              ),
+            ],
+          )
+        ),
+        backgroundColor: Colors.white,
+        iconTheme: IconThemeData(color: Colors.black),
         actions: <Widget>[
-          Padding(
-            padding: EdgeInsets.only(right: 20.0),
-            child: Row(
-              children: <Widget>[
-                Text(
-                  'toggle',
-                  style: TextStyle(color: Colors.black),
-                ),
-                Switch(
-                  value: _isToggled,
-                  onChanged: (bool value) {
-                    setState(() {
-                      _isToggled = value;
-                    });
-                  },
-                  activeColor: Colors.white,
-                  activeTrackColor: Colors.deepPurple,
-                ),
-              ],
-            ),
+          PopupMenuButton<String>(
+            onSelected: (String result) {
+              setState(() {
+                // Add your logic here for menu item selection
+                print(result);
+              });
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'Option 1',
+                child: Text('편집하기'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'Option 2',
+                child: Text('정렬하기'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'Option 3',
+                child: Text('랜덤섞기'),
+              ),
+            ],
           ),
         ],
       ),
-
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
-              itemCount: widget.words.length,
+              itemCount: words.length,
               itemBuilder: (context, index) {
-                final String? idString = widget.words[index]['id'];
+                final String? idString = words[index]['id'];
                 if (idString == null) {
                   return ListTile(
                     title: Text('No ID found'),
@@ -146,25 +195,41 @@ class _VocabularyListState extends State<VocabularyList> {
                   );
                 }
                 final int id = int.parse(idString);
+                final int wordNumber = index + 1;
 
                 return ListTile(
-                  title: Text(widget.words[index]['word'] ?? ''),
-                  subtitle: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // 텍스트의 크기를 측정
-                      TextSpan span = TextSpan(
-                        text: widget.words[index]['meaning'] ?? '',
-                        style: TextStyle(
-                          color: Colors.black,
+                  title: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 10.0,
+                        child: Text(
+                          '$wordNumber',
+                          style: TextStyle(fontSize: 12.0),
                         ),
-                      );
+                      ),
+                      SizedBox(width: 8.0),
+                      Text(words[index]['word'] ?? ''),
+                    ],
+                  ),
+                  subtitle: Padding(
+                    padding: EdgeInsets.only(left:28.0),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // 텍스트의 크기를 측정
+                        TextSpan span = TextSpan(
+                          text: words[index]['meaning'] ?? '',
+                          style: TextStyle(
+                            color: Colors.black,
+                          ),
+                        );
 
-                      TextPainter tp = TextPainter(
-                        text: span,
-                        textDirection: TextDirection.ltr,
-                      );
+                        TextPainter tp = TextPainter(
+                          text: span,
+                          textDirection: TextDirection.ltr,
+                        );
 
-                      tp.layout(maxWidth: constraints.maxWidth);
+
+                        tp.layout(maxWidth: constraints.maxWidth);
 
                       return Stack(
                         children: [
@@ -174,12 +239,13 @@ class _VocabularyListState extends State<VocabularyList> {
                           if (_isToggled)
                             Container(
                               width: tp.size.width,
-                              height: tp.size.height ,
+                              height: tp.size.height,
                               color: Colors.purple[100],
                             ),
                         ],
                       );
                     },
+                  ),
                   ),
                   onLongPress: () {
                     showDialog(
@@ -204,23 +270,15 @@ class _VocabularyListState extends State<VocabularyList> {
                     );
                   },
                 );
-
               },
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ElevatedButton(
-                  onPressed: () {},
-                  child: Text('정렬'),
-                ),
-                ElevatedButton(
-                  onPressed: () {},
-                  child: Text('설정'),
-                ),
+                Expanded(child: Container()), // Left spacer
                 ElevatedButton(
                   onPressed: () {
                     Navigator.push(
@@ -234,16 +292,34 @@ class _VocabularyListState extends State<VocabularyList> {
                       ),
                     );
                   },
-                  child: Text('+단어'),
+                  child: Text('+ 단어 추가하기'),
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all(Colors.deepPurple),
                     foregroundColor: MaterialStateProperty.all(Colors.white),
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: () {},
-                  child: Text('편집'),
-                ),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      FlutterSwitch(
+                        width: 50.0,
+                        height: 35.0,
+                        borderRadius: 50.0,
+                        toggleSize:20.0,
+                        padding: 4.0,
+                        activeColor: Colors.deepPurple,
+                        //showOnOff: true,
+                        value: _isToggled,
+                        onToggle: (val){
+                            setState(() {
+                              _isToggled = val;
+                            });
+                        },
+                      )
+                    ],
+                  ),
+                ), // Right spacer with switch
               ],
             ),
           ),
@@ -277,5 +353,19 @@ class DictionaryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomWebView();
+  }
+}
+
+class NewPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('New Page'),
+      ),
+      body: Center(
+        child: Text('This is a new page'),
+      ),
+    );
   }
 }
