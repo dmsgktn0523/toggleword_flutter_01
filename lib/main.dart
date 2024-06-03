@@ -31,6 +31,7 @@ class _MyAppState extends State<MyApp> {
           children: [
             VocabularyList(),
             DictionaryScreen(),
+            NewWordPage(onAddWord: (String word, String meaning) {}),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
@@ -51,6 +52,10 @@ class _MyAppState extends State<MyApp> {
               icon: Icon(Icons.search),
               label: '영어사전',
             ),
+            // BottomNavigationBarItem(
+            //   icon: Icon(Icons.add),
+            //   label: '단어 추가',
+            // ),
           ],
         ),
       ),
@@ -67,6 +72,8 @@ class _VocabularyListState extends State<VocabularyList> {
   final List<Map<String, String>> words = [];
   late Database _database;
   bool _isToggled = false;
+  bool _isEditing = false;
+  Set<int> _selectedWords = Set<int>();
 
   Future<Database> initializeDB() async {
     String path = join(await getDatabasesPath(), 'word_database.db');
@@ -112,6 +119,103 @@ class _VocabularyListState extends State<VocabularyList> {
     _loadWords();
   }
 
+  void _sortWords(String criterion) {
+    setState(() {
+      if (criterion == 'A-Z 순') {
+        words.sort((a, b) => a['word']!.compareTo(b['word']!));
+      } else if (criterion == 'Z-A 순') {
+        words.sort((a, b) => b['word']!.compareTo(a['word']!));
+      } else if (criterion == '오래된순') {
+        words.sort((a, b) => int.parse(a['id']!).compareTo(int.parse(b['id']!)));
+      } else if (criterion == '최신 저장순') {
+        words.sort((a, b) => int.parse(b['id']!).compareTo(int.parse(a['id']!)));
+      } else if (criterion == '랜덤순') {
+        words.shuffle();
+      }
+    });
+  }
+
+  void _toggleEditMode() {
+    setState(() {
+      _isEditing = !_isEditing;
+      _selectedWords.clear();
+    });
+  }
+
+  void _handleWordSelection(int id) {
+    setState(() {
+      if (_selectedWords.contains(id)) {
+        _selectedWords.remove(id);
+      } else {
+        _selectedWords.add(id);
+      }
+    });
+  }
+
+  void _deleteSelectedWords() {
+    _selectedWords.forEach((id) {
+      _deleteWord(id);
+    });
+    _toggleEditMode();
+  }
+
+  void _showActionSheet(BuildContext context, int id, String word, String meaning) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('옵션 선택'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.edit),
+                title: Text('수정하기'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // 편집하기 로직 추가
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.delete),
+                title: Text('삭제하기'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _deleteWord(id);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.copy),
+                title: Text('복사하기'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // 복사하기 로직 추가
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.move_to_inbox),
+                title: Text('이동하기'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // 이동하기 로직 추가
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: Text('취소'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   @override
   void dispose() {
     _database.close();
@@ -129,7 +233,7 @@ class _VocabularyListState extends State<VocabularyList> {
               PageRouteBuilder(
                 pageBuilder: (context, animation, secondaryAnimation) => WordListLibrary(),
                 transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  const begin = Offset(-1.0, 0.0); // 오른쪽에서 왼쪽으로 애니메이션
+                  const begin = Offset(1.0, 0.0); // 오른쪽에서 왼쪽으로 애니메이션
                   const end = Offset.zero;
                   const curve = Curves.easeInOut;
 
@@ -146,133 +250,165 @@ class _VocabularyListState extends State<VocabularyList> {
           child: Row(
             children: [
               Icon(Icons.arrow_back, color: Colors.black),
-              SizedBox(width: 30.0),
+              SizedBox(width: 8.0),
               Text(
-                '단어장',
+                '단어장 목록',
                 style: TextStyle(color: Colors.black),
               ),
             ],
-          )
+          ),
         ),
         backgroundColor: Colors.white,
         iconTheme: IconThemeData(color: Colors.black),
         actions: <Widget>[
-          PopupMenuButton<String>(
-            onSelected: (String result) {
-              setState(() {
-                // Add your logic here for menu item selection
-                print(result);
-              });
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'Option 1',
-                child: Text('편집하기'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'Option 2',
-                child: Text('정렬하기'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'Option 3',
-                child: Text('랜덤섞기'),
-              ),
-            ],
-          ),
+          if (_isEditing)
+            IconButton(
+              icon: Icon(Icons.close),
+              onPressed: _toggleEditMode,
+            ),
+          if (!_isEditing)
+            PopupMenuButton<String>(
+              onSelected: (String result) {
+                if (result == '편집하기') {
+                  _toggleEditMode();
+                } else if (result == '정렬하기') {
+                  showSortMenu(context);
+                } else if (result == '보기설정') {
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: '편집하기',
+                  child: Text('편집하기'),
+                ),
+                const PopupMenuItem<String>(
+                  value: '정렬하기',
+                  child: Text('정렬하기'),
+                ),
+                const PopupMenuItem<String>(
+                  value: '보기설정',
+                  child: Text('보기설정'),
+                ),
+              ],
+            ),
         ],
       ),
       body: Column(
         children: [
+          if (_isEditing)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: _selectedWords.isEmpty ? null : () {
+                      // 이동하기 로직 추가
+                    },
+                    child: Text('이동하기'),
+                  ),
+                  ElevatedButton(
+                    onPressed: _selectedWords.isEmpty ? null : () {
+                      // 복사하기 로직 추가
+                    },
+                    child: Text('복사하기'),
+                  ),
+                  ElevatedButton(
+                    onPressed: _selectedWords.isEmpty ? null : _deleteSelectedWords,
+                    child: Text('삭제하기'),
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: ListView.builder(
               itemCount: words.length,
               itemBuilder: (context, index) {
                 final String? idString = words[index]['id'];
                 if (idString == null) {
-                  return ListTile(
-                    title: Text('No ID found'),
-                    subtitle: Text('This word has no ID.'),
+                  return Column(
+                    children: [
+                      ListTile(
+                        title: Text('No ID found'),
+                        subtitle: Text('This word has no ID.'),
+                      ),
+                      Divider(), // Add Divider here
+                    ],
                   );
                 }
                 final int id = int.parse(idString);
                 final int wordNumber = index + 1;
 
-                return ListTile(
-                  title: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 10.0,
-                        child: Text(
-                          '$wordNumber',
-                          style: TextStyle(fontSize: 12.0),
+                return Column(
+                  children: [
+                    ListTile(
+                      leading: _isEditing
+                          ? Checkbox(
+                        value: _selectedWords.contains(id),
+                        onChanged: (bool? value) {
+                          _handleWordSelection(id);
+                        },
+                      )
+                          : null,
+                      title: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 10.0,
+                            child: Text(
+                              '$wordNumber',
+                              style: TextStyle(fontSize: 12.0),
+                            ),
+                          ),
+                          SizedBox(width: 8.0),
+                          Text(words[index]['word'] ?? ''),
+                        ],
+                      ),
+                      subtitle: Padding(
+                        padding: EdgeInsets.only(left: 28.0),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            // 텍스트의 크기를 측정
+                            TextSpan span = TextSpan(
+                              text: words[index]['meaning'] ?? '',
+                              style: TextStyle(
+                                color: Colors.black,
+                              ),
+                            );
+
+                            TextPainter tp = TextPainter(
+                              text: span,
+                              textDirection: TextDirection.ltr,
+                            );
+
+                            tp.layout(maxWidth: constraints.maxWidth);
+
+                            return Stack(
+                              children: [
+                                RichText(
+                                  text: span,
+                                ),
+                                if (_isToggled)
+                                  Container(
+                                    width: tp.size.width,
+                                    height: tp.size.height,
+                                    color: Colors.purple[100],
+                                  ),
+                              ],
+                            );
+                          },
                         ),
                       ),
-                      SizedBox(width: 8.0),
-                      Text(words[index]['word'] ?? ''),
-                    ],
-                  ),
-                  subtitle: Padding(
-                    padding: EdgeInsets.only(left:28.0),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        // 텍스트의 크기를 측정
-                        TextSpan span = TextSpan(
-                          text: words[index]['meaning'] ?? '',
-                          style: TextStyle(
-                            color: Colors.black,
-                          ),
-                        );
-
-                        TextPainter tp = TextPainter(
-                          text: span,
-                          textDirection: TextDirection.ltr,
-                        );
-
-
-                        tp.layout(maxWidth: constraints.maxWidth);
-
-                      return Stack(
-                        children: [
-                          RichText(
-                            text: span,
-                          ),
-                          if (_isToggled)
-                            Container(
-                              width: tp.size.width,
-                              height: tp.size.height,
-                              color: Colors.purple[100],
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                  ),
-                  onLongPress: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('Delete Word'),
-                        content: Text('Are you sure you want to delete this word?'),
-                        actions: <Widget>[
-                          TextButton(
-                            child: Text('Cancel'),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                          TextButton(
-                            child: Text('Delete'),
-                            onPressed: () {
-                              _deleteWord(id);
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                      onLongPress: () {
+                        _showActionSheet(context, id, words[index]['word'] ?? '', words[index]['meaning'] ?? '');
+                      },
+                    ),
+                    // Divider(), // Add Divider here
+                  ],
                 );
               },
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -306,15 +442,15 @@ class _VocabularyListState extends State<VocabularyList> {
                         width: 50.0,
                         height: 35.0,
                         borderRadius: 50.0,
-                        toggleSize:20.0,
+                        toggleSize: 20.0,
                         padding: 4.0,
                         activeColor: Colors.deepPurple,
-                        //showOnOff: true,
+                        // showOnOff: true,
                         value: _isToggled,
-                        onToggle: (val){
-                            setState(() {
-                              _isToggled = val;
-                            });
+                        onToggle: (val) {
+                          setState(() {
+                            _isToggled = val;
+                          });
                         },
                       )
                     ],
@@ -326,6 +462,39 @@ class _VocabularyListState extends State<VocabularyList> {
         ],
       ),
     );
+  }
+
+  void showSortMenu(BuildContext context) {
+    showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(200, 50, 0, 0),
+      items: [
+        PopupMenuItem<String>(
+          value: 'A-Z 순',
+          child: Text('A-Z 순'),
+        ),
+        PopupMenuItem<String>(
+          value: 'Z-A 순',
+          child: Text('Z-A 순'),
+        ),
+        PopupMenuItem<String>(
+          value: '오래된순',
+          child: Text('오래된순'),
+        ),
+        PopupMenuItem<String>(
+          value: '최신 저장순',
+          child: Text('최신 저장순'),
+        ),
+        PopupMenuItem<String>(
+          value: '랜덤순',
+          child: Text('랜덤순'),
+        ),
+      ],
+    ).then((value) {
+      if (value != null) {
+        _sortWords(value);
+      }
+    });
   }
 }
 
