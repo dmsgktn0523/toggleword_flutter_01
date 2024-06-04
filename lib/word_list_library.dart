@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'main.dart'; // MyApp을 가져오기 위한 import
 
-void main() => runApp(MyApp());
+void main() => runApp(MyAppWrapper());
 
-class MyApp extends StatelessWidget {
+class MyAppWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -29,8 +30,9 @@ class _WordListLibraryState extends State<WordListLibrary> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('🏠 단어장 홈',
-        style: TextStyle(color: Colors.white),
+        title: Text(
+          '🏠 단어장 홈',
+          style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.deepPurple,
       ),
@@ -46,7 +48,7 @@ class _WordListLibraryState extends State<WordListLibrary> {
                 Navigator.push(
                   context,
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => VocabularyListScreen(wordLists[index]['title']!),
+                    pageBuilder: (context, animation, secondaryAnimation) => MyApp(listTitle: wordLists[index]['title']!),
                     transitionsBuilder: (context, animation, secondaryAnimation, child) {
                       const begin = Offset(1.0, 0.0);
                       const end = Offset.zero;
@@ -63,25 +65,6 @@ class _WordListLibraryState extends State<WordListLibrary> {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class VocabularyListScreen extends StatelessWidget {
-  final String listTitle;
-
-  VocabularyListScreen(this.listTitle);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(listTitle),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: Center(
-        child: Text('Vocabulary list for $listTitle'),
       ),
     );
   }

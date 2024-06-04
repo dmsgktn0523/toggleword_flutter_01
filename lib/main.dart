@@ -6,9 +6,22 @@ import 'new_word_page.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(MyAppWrapper());
+
+class MyAppWrapper extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: WordListLibrary(),
+    );
+  }
+}
 
 class MyApp extends StatefulWidget {
+  final String listTitle;
+
+  MyApp({required this.listTitle});
+
   @override
   _MyAppState createState() => _MyAppState();
 }
@@ -19,45 +32,41 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: PageView(
-          controller: _pageController,
-          onPageChanged: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          children: [
-            VocabularyList(),
-            DictionaryScreen(),
-            NewWordPage(onAddWord: (String word, String meaning) {}),
-          ],
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-              _pageController.animateToPage(index,
-                  duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
-            });
-          },
-          items: [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.book),
-              label: '단어장',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              label: '영어사전',
-            ),
-            // BottomNavigationBarItem(
-            //   icon: Icon(Icons.add),
-            //   label: '단어 추가',
-            // ),
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.listTitle),
+      ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        children: [
+          VocabularyList(),
+          DictionaryScreen(),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+            _pageController.animateToPage(index,
+                duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+          });
+        },
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.book),
+            label: '단어장',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: '영어사전',
+          ),
+        ],
       ),
     );
   }
@@ -215,7 +224,6 @@ class _VocabularyListState extends State<VocabularyList> {
     );
   }
 
-
   @override
   void dispose() {
     _database.close();
@@ -233,7 +241,7 @@ class _VocabularyListState extends State<VocabularyList> {
               PageRouteBuilder(
                 pageBuilder: (context, animation, secondaryAnimation) => WordListLibrary(),
                 transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  const begin = Offset(1.0, 0.0); // 오른쪽에서 왼쪽으로 애니메이션
+                  const begin = Offset(-1.0, 0.0); // 오른쪽에서 왼쪽으로 애니메이션
                   const end = Offset.zero;
                   const curve = Curves.easeInOut;
 
@@ -247,16 +255,6 @@ class _VocabularyListState extends State<VocabularyList> {
               ),
             );
           },
-          child: Row(
-            children: [
-              Icon(Icons.arrow_back, color: Colors.black),
-              SizedBox(width: 8.0),
-              Text(
-                '단어장 목록',
-                style: TextStyle(color: Colors.black),
-              ),
-            ],
-          ),
         ),
         backgroundColor: Colors.white,
         iconTheme: IconThemeData(color: Colors.black),
@@ -273,7 +271,10 @@ class _VocabularyListState extends State<VocabularyList> {
                   _toggleEditMode();
                 } else if (result == '정렬하기') {
                   showSortMenu(context);
-                } else if (result == '보기설정') {
+                } else if (result == '랜덤섞기') {
+                  setState(() {
+                    words.shuffle();
+                  });
                 }
               },
               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -286,8 +287,8 @@ class _VocabularyListState extends State<VocabularyList> {
                   child: Text('정렬하기'),
                 ),
                 const PopupMenuItem<String>(
-                  value: '보기설정',
-                  child: Text('보기설정'),
+                  value: '랜덤섞기',
+                  child: Text('랜덤섞기'),
                 ),
               ],
             ),
@@ -332,7 +333,10 @@ class _VocabularyListState extends State<VocabularyList> {
                         title: Text('No ID found'),
                         subtitle: Text('This word has no ID.'),
                       ),
-                      Divider(), // Add Divider here
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Divider(),
+                      ), // Add Divider here
                     ],
                   );
                 }
@@ -402,13 +406,15 @@ class _VocabularyListState extends State<VocabularyList> {
                         _showActionSheet(context, id, words[index]['word'] ?? '', words[index]['meaning'] ?? '');
                       },
                     ),
-                    // Divider(), // Add Divider here
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Divider(),
+                    ), // Add Divider here
                   ],
                 );
               },
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(

@@ -1,31 +1,39 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:toggleworld_flutter_01/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(MyApp());
+    await tester.pumpWidget(MyAppWrapper());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Navigate to the test word list screen
+    await tester.tap(find.text('테스트 단어장'));
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Verify that the VocabularyList is displayed
+    expect(find.text('단어장 목록'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Additional testing logic can go here, for example:
+    // Verify that the initial list is empty or has expected items
+
+    // Tap the add button and verify the addition logic
+    await tester.tap(find.byType(ElevatedButton).first);
+    await tester.pumpAndSettle();
+
+    // Verify that the new word addition screen is shown
+    expect(find.text('단어 추가'), findsOneWidget);
+
+    // Enter a new word and its meaning
+    await tester.enterText(find.byType(TextField).first, 'testWord');
+    await tester.enterText(find.byType(TextField).last, 'testMeaning');
+
+    // Tap the confirm button to add the new word
+    await tester.tap(find.byType(ElevatedButton).last);
+    await tester.pumpAndSettle();
+
+    // Verify that the new word is now in the list
+    expect(find.text('testWord'), findsOneWidget);
+    expect(find.text('testMeaning'), findsOneWidget);
   });
 }
