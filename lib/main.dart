@@ -19,8 +19,9 @@ class MyAppWrapper extends StatelessWidget {
 
 class MyApp extends StatefulWidget {
   final String listTitle;
+  final int listId;
 
-  MyApp({required this.listTitle});
+  MyApp({required this.listTitle, required this.listId});
 
   @override
   _MyAppState createState() => _MyAppState();
@@ -44,7 +45,7 @@ class _MyAppState extends State<MyApp> {
           });
         },
         children: [
-          VocabularyList(),
+          VocabularyList(listId: widget.listId),
           DictionaryScreen(),
         ],
       ),
@@ -73,6 +74,10 @@ class _MyAppState extends State<MyApp> {
 }
 
 class VocabularyList extends StatefulWidget {
+  final int listId;
+
+  VocabularyList({required this.listId});
+
   @override
   _VocabularyListState createState() => _VocabularyListState();
 }
@@ -91,7 +96,7 @@ class _VocabularyListState extends State<VocabularyList> {
       version: 1,
       onCreate: (Database db, int version) async {
         await db.execute(
-          'CREATE TABLE words (id INTEGER PRIMARY KEY AUTOINCREMENT, word TEXT, meaning TEXT)',
+          'CREATE TABLE words (id INTEGER PRIMARY KEY AUTOINCREMENT, word TEXT, meaning TEXT, list_id INTEGER)',
         );
       },
     );
@@ -102,12 +107,12 @@ class _VocabularyListState extends State<VocabularyList> {
     super.initState();
     initializeDB().then((value) {
       _database = value;
-      _loadWords();
+      _loadWords(widget.listId);
     });
   }
 
-  Future<void> _loadWords() async {
-    final List<Map<String, dynamic>> queryResults = await _database.query('words');
+  Future<void> _loadWords(int listId) async {
+    final List<Map<String, dynamic>> queryResults = await _database.query('words', where: 'list_id = ?', whereArgs: [listId]);
     setState(() {
       words.clear();
       words.addAll(queryResults.map((e) => {
@@ -119,13 +124,13 @@ class _VocabularyListState extends State<VocabularyList> {
   }
 
   Future<void> _addWord(String word, String meaning) async {
-    await _database.insert('words', {'word': word, 'meaning': meaning});
-    _loadWords();
+    await _database.insert('words', {'word': word, 'meaning': meaning, 'list_id': widget.listId});
+    _loadWords(widget.listId);
   }
 
   Future<void> _deleteWord(int id) async {
     await _database.delete('words', where: 'id = ?', whereArgs: [id]);
-    _loadWords();
+    _loadWords(widget.listId);
   }
 
   void _sortWords(String criterion) {

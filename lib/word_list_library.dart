@@ -20,9 +20,9 @@ class WordListLibrary extends StatefulWidget {
 
 class _WordListLibraryState extends State<WordListLibrary> {
   final List<Map<String, String>> wordLists = [
-    {'title': '데일리', 'description': 'Commonly used words for daily conversation.'},
-    {'title': 'Business Vocabulary', 'description': 'Words commonly used in business settings.'},
-    {'title': 'Technical Terms', 'description': 'Vocabulary for technical and scientific terms.'},
+    {'id': '1', 'title': '데일리', 'description': 'Commonly used words for daily conversation.'},
+    {'id': '2', 'title': 'Business Vocabulary', 'description': 'Words commonly used in business settings.'},
+    {'id': '3', 'title': 'Technical Terms', 'description': 'Vocabulary for technical and scientific terms.'},
   ];
 
   @override
@@ -51,7 +51,7 @@ class _WordListLibraryState extends State<WordListLibrary> {
                         context,
                         PageRouteBuilder(
                           pageBuilder: (context, animation, secondaryAnimation) =>
-                              MyApp(listTitle: wordLists[index]['title']!),
+                              MyApp(listTitle: wordLists[index]['title']!, listId: int.parse(wordLists[index]['id']!)),
                           transitionsBuilder: (context, animation, secondaryAnimation, child) {
                             const begin = Offset(1.0, 0.0);
                             const end = Offset.zero;
@@ -113,7 +113,9 @@ class _WordListLibraryState extends State<WordListLibrary> {
 
                             if (title.isNotEmpty && description.isNotEmpty) {
                               setState(() {
+                                int newId = wordLists.length + 1;
                                 wordLists.add({
+                                  'id': newId.toString(),
                                   'title': title,
                                   'description': description,
                                 });
