@@ -20,8 +20,9 @@ class MyAppWrapper extends StatelessWidget {
 class MyApp extends StatefulWidget {
   final String listTitle;
   final int listId;
+  final List<Map<String, String>> wordLists;
 
-  MyApp({required this.listTitle, required this.listId});
+  MyApp({required this.listTitle, required this.listId, required this.wordLists});
 
   @override
   _MyAppState createState() => _MyAppState();
@@ -34,19 +35,29 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.listTitle),
-      ),
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+      body: Column(
         children: [
-          VocabularyList(listId: widget.listId),
-          DictionaryScreen(),
+          // AppBar 대신 제목을 포함한 새로운 레이아웃 추가
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ),
+          ),
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              children: [
+                VocabularyList(listId: widget.listId, wordLists: widget.wordLists),
+                DictionaryScreen(),
+              ],
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -73,10 +84,12 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
+
 class VocabularyList extends StatefulWidget {
   final int listId;
+  final List<Map<String, String>> wordLists;
 
-  VocabularyList({required this.listId});
+  VocabularyList({required this.listId, required this.wordLists});
 
   @override
   _VocabularyListState createState() => _VocabularyListState();
@@ -261,7 +274,6 @@ class _VocabularyListState extends State<VocabularyList> {
             );
           },
         ),
-        backgroundColor: Colors.white,
         iconTheme: IconThemeData(color: Colors.black),
         actions: <Widget>[
           if (_isEditing)

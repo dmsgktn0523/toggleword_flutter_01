@@ -51,7 +51,11 @@ class _WordListLibraryState extends State<WordListLibrary> {
                         context,
                         PageRouteBuilder(
                           pageBuilder: (context, animation, secondaryAnimation) =>
-                              MyApp(listTitle: wordLists[index]['title']!, listId: int.parse(wordLists[index]['id']!)),
+                              MyApp(
+                                listTitle: wordLists[index]['title']!,
+                                listId: int.parse(wordLists[index]['id']!),
+                                wordLists: wordLists, // wordLists 전달
+                              ),
                           transitionsBuilder: (context, animation, secondaryAnimation, child) {
                             const begin = Offset(1.0, 0.0);
                             const end = Offset.zero;
