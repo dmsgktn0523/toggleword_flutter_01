@@ -5,6 +5,8 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'new_word_page.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as path_utils;
+import 'package:flutter_tts/flutter_tts.dart';
+
 
 void main() => runApp(MyAppWrapper());
 
@@ -101,6 +103,14 @@ class _VocabularyListState extends State<VocabularyList> {
   bool _isToggled = false;
   bool _isEditing = false;
   Set<int> _selectedWords = Set<int>();
+  late FlutterTts flutterTts;
+
+  Future<void> _speak(String text) async {
+    await flutterTts.setLanguage("en-US");
+    await flutterTts.setPitch(1.0);
+    await flutterTts.speak(text);
+  }
+
 
   Future<Database> initializeDB() async {
     String path = path_utils.join(await getDatabasesPath(), 'word_database.db');
@@ -122,6 +132,9 @@ class _VocabularyListState extends State<VocabularyList> {
       _database = value;
       _loadWords(widget.listId);
     });
+
+    // flutter_tts 초기화
+    flutterTts = FlutterTts();
   }
 
   Future<void> _loadWords(int listId) async {
@@ -483,7 +496,7 @@ class _VocabularyListState extends State<VocabularyList> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Divider(),
-                      ), // Add Divider here
+                      ),
                     ],
                   );
                 }
@@ -518,12 +531,9 @@ class _VocabularyListState extends State<VocabularyList> {
                         padding: EdgeInsets.only(left: 28.0),
                         child: LayoutBuilder(
                           builder: (context, constraints) {
-                            // 텍스트의 크기를 측정
                             TextSpan span = TextSpan(
                               text: words[index]['meaning'] ?? '',
-                              style: TextStyle(
-                                color: Colors.black,
-                              ),
+                              style: TextStyle(color: Colors.black),
                             );
 
                             TextPainter tp = TextPainter(
@@ -535,9 +545,7 @@ class _VocabularyListState extends State<VocabularyList> {
 
                             return Stack(
                               children: [
-                                RichText(
-                                  text: span,
-                                ),
+                                RichText(text: span),
                                 if (_isToggled)
                                   Container(
                                     width: tp.size.width,
@@ -549,14 +557,18 @@ class _VocabularyListState extends State<VocabularyList> {
                           },
                         ),
                       ),
+                      onTap: () {
+                        _speak(words[index]['word'] ?? '');
+                      },
                       onLongPress: () {
                         _showActionSheet(context, id, words[index]['word'] ?? '', words[index]['meaning'] ?? '');
                       },
                     ),
+
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Divider(),
-                    ), // Add Divider here
+                    ),
                   ],
                 );
               },
