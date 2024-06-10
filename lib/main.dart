@@ -4,7 +4,7 @@ import 'package:toggleworld_flutter_01/word_list_library.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'new_word_page.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as path_utils;
 
 void main() => runApp(MyAppWrapper());
 
@@ -37,13 +37,6 @@ class _MyAppState extends State<MyApp> {
     return Scaffold(
       body: Column(
         children: [
-          // AppBar 대신 제목을 포함한 새로운 레이아웃 추가
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            ),
-          ),
           Expanded(
             child: PageView(
               controller: _pageController,
@@ -53,7 +46,11 @@ class _MyAppState extends State<MyApp> {
                 });
               },
               children: [
-                VocabularyList(listId: widget.listId, wordLists: widget.wordLists),
+                VocabularyList(
+                  listId: widget.listId,
+                  wordLists: widget.wordLists,
+                  listTitle: widget.listTitle,
+                ),
                 DictionaryScreen(),
               ],
             ),
@@ -65,8 +62,11 @@ class _MyAppState extends State<MyApp> {
         onTap: (index) {
           setState(() {
             _currentIndex = index;
-            _pageController.animateToPage(index,
-                duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+            _pageController.animateToPage(
+              index,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
           });
         },
         items: [
@@ -84,12 +84,12 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-
 class VocabularyList extends StatefulWidget {
   final int listId;
   final List<Map<String, String>> wordLists;
+  final String listTitle;
 
-  VocabularyList({required this.listId, required this.wordLists});
+  VocabularyList({required this.listId, required this.wordLists, required this.listTitle});
 
   @override
   _VocabularyListState createState() => _VocabularyListState();
@@ -103,7 +103,7 @@ class _VocabularyListState extends State<VocabularyList> {
   Set<int> _selectedWords = Set<int>();
 
   Future<Database> initializeDB() async {
-    String path = join(await getDatabasesPath(), 'word_database.db');
+    String path = path_utils.join(await getDatabasesPath(), 'word_database.db');
     return openDatabase(
       path,
       version: 1,
@@ -125,7 +125,11 @@ class _VocabularyListState extends State<VocabularyList> {
   }
 
   Future<void> _loadWords(int listId) async {
-    final List<Map<String, dynamic>> queryResults = await _database.query('words', where: 'list_id = ?', whereArgs: [listId]);
+    final List<Map<String, dynamic>> queryResults = await _database.query(
+      'words',
+      where: 'list_id = ?',
+      whereArgs: [listId],
+    );
     setState(() {
       words.clear();
       words.addAll(queryResults.map((e) => {
@@ -137,13 +141,46 @@ class _VocabularyListState extends State<VocabularyList> {
   }
 
   Future<void> _addWord(String word, String meaning) async {
-    await _database.insert('words', {'word': word, 'meaning': meaning, 'list_id': widget.listId});
+    await _database.insert(
+        'words', {'word': word, 'meaning': meaning, 'list_id': widget.listId});
     _loadWords(widget.listId);
   }
 
   Future<void> _deleteWord(int id) async {
     await _database.delete('words', where: 'id = ?', whereArgs: [id]);
     _loadWords(widget.listId);
+  }
+
+  Future<void> _moveWords(int targetListId) async {
+    for (int id in _selectedWords) {
+      await _database.update('words', {'list_id': targetListId},
+          where: 'id = ?', whereArgs: [id]);
+    }
+    _loadWords(widget.listId);
+    _toggleEditMode();
+  }
+
+  Future<void> _copyWords(int targetListId) async {
+    for (int id in _selectedWords) {
+      // Get the word details by ID
+      final List<Map<String, dynamic>> queryResult = await _database.query(
+        'words',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+
+      if (queryResult.isNotEmpty) {
+        final wordData = queryResult.first;
+        // Insert the word into the target list
+        await _database.insert('words', {
+          'word': wordData['word'],
+          'meaning': wordData['meaning'],
+          'list_id': targetListId,
+        });
+      }
+    }
+    _loadWords(widget.listId);
+    _toggleEditMode();
   }
 
   void _sortWords(String criterion) {
@@ -179,6 +216,96 @@ class _VocabularyListState extends State<VocabularyList> {
     });
   }
 
+  void _showMoveDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        int? selectedListId;
+        return AlertDialog(
+          title: Text('이동할 단어장 선택'),
+          content: DropdownButtonFormField<int>(
+            value: selectedListId,
+            items: widget.wordLists.map((list) {
+              return DropdownMenuItem<int>(
+                value: int.parse(list['id']!),
+                child: Text(list['title']!),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                selectedListId = value!;
+              });
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('취소'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (selectedListId != null) {
+                  _moveWords(selectedListId!);
+                  Navigator.pop(context);
+                }
+              },
+              child: Text('이동'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  void _showCopyDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        int? selectedListId;
+        return AlertDialog(
+          title: Text('복사할 단어장 선택'),
+          content: DropdownButtonFormField<int>(
+            value: selectedListId,
+            items: widget.wordLists.map((list) {
+              return DropdownMenuItem<int>(
+                value: int.parse(list['id']!),
+                child: Text(list['title']!),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                selectedListId = value!;
+              });
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('취소'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (selectedListId != null) {
+                  _copyWords(selectedListId!);
+                  Navigator.pop(context);
+                }
+              },
+              child: Text('복사'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+
+
   void _deleteSelectedWords() {
     _selectedWords.forEach((id) {
       _deleteWord(id);
@@ -186,9 +313,9 @@ class _VocabularyListState extends State<VocabularyList> {
     _toggleEditMode();
   }
 
-  void _showActionSheet(BuildContext context, int id, String word, String meaning) {
+  void _showActionSheet(BuildContext buildContext, int id, String word, String meaning) {
     showDialog(
-      context: context,
+      context: buildContext,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('옵션 선택'),
@@ -216,7 +343,7 @@ class _VocabularyListState extends State<VocabularyList> {
                 title: Text('복사하기'),
                 onTap: () {
                   Navigator.pop(context);
-                  // 복사하기 로직 추가
+                  _copyWords(widget.listId); // 예를 들어 현재 목록 ID로 복사하려면 widget.listId를 사용
                 },
               ),
               ListTile(
@@ -224,7 +351,7 @@ class _VocabularyListState extends State<VocabularyList> {
                 title: Text('이동하기'),
                 onTap: () {
                   Navigator.pop(context);
-                  // 이동하기 로직 추가
+                  _showMoveDialog();
                 },
               ),
             ],
@@ -273,6 +400,13 @@ class _VocabularyListState extends State<VocabularyList> {
               ),
             );
           },
+          child: Row(
+            children: [
+              //Icon(Icons.arrow_back), // 뒤로 가기 화살표 아이콘
+              SizedBox(width: 8.0), // 아이콘과 제목 사이의 간격
+              Text(widget.listTitle), // listTitle을 표시
+            ],
+          ),
         ),
         iconTheme: IconThemeData(color: Colors.black),
         actions: <Widget>[
@@ -320,15 +454,11 @@ class _VocabularyListState extends State<VocabularyList> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                    onPressed: _selectedWords.isEmpty ? null : () {
-                      // 이동하기 로직 추가
-                    },
+                    onPressed: _selectedWords.isEmpty ? null : _showMoveDialog,
                     child: Text('이동하기'),
                   ),
                   ElevatedButton(
-                    onPressed: _selectedWords.isEmpty ? null : () {
-                      // 복사하기 로직 추가
-                    },
+                    onPressed: _selectedWords.isEmpty ? null : _showCopyDialog,
                     child: Text('복사하기'),
                   ),
                   ElevatedButton(
