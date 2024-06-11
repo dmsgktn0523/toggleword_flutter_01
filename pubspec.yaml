@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_svg: ^1.1.6
+
   webview_flutter : ^3.0.4
   http: ^0.13.3
   html: ^0.15.0
@@ -37,6 +39,7 @@ dependencies:
   path_provider: ^2.0.10
   flutter_switch: ^0.3.2
   flutter_tts: ^3.8.5
+
 
 
 
@@ -69,9 +72,10 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/icons/Dictionary.svg
+#     - images/a_dot_burr.jpeg
+#     - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

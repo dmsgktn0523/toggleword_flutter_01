@@ -6,6 +6,7 @@ import 'new_word_page.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as path_utils;
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 
 void main() => runApp(MyAppWrapper());
@@ -77,6 +78,7 @@ class _MyAppState extends State<MyApp> {
             label: '단어장',
           ),
           BottomNavigationBarItem(
+            // icon: SvgPicture.asset("assets/icons/Dictionary.svg"),
             icon: Icon(Icons.search),
             label: '영어사전',
           ),
@@ -104,6 +106,8 @@ class _VocabularyListState extends State<VocabularyList> {
   bool _isEditing = false;
   Set<int> _selectedWords = Set<int>();
   late FlutterTts flutterTts;
+  late TextEditingController _wordController;
+  late TextEditingController _meaningController;
 
   Future<void> _speak(String text) async {
     await flutterTts.setLanguage("en-US");
@@ -135,6 +139,10 @@ class _VocabularyListState extends State<VocabularyList> {
 
     // flutter_tts 초기화
     flutterTts = FlutterTts();
+
+    //초기화
+    _wordController = TextEditingController();
+    _meaningController = TextEditingController();
   }
 
   Future<void> _loadWords(int listId) async {
@@ -194,6 +202,16 @@ class _VocabularyListState extends State<VocabularyList> {
     }
     _loadWords(widget.listId);
     _toggleEditMode();
+  }
+
+  Future<void> _updateWord(int id, String newWord, String newMeaning) async {
+    await _database.update(
+      'words',
+      {'word': newWord, 'meaning': newMeaning},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    _loadWords(widget.listId);
   }
 
   void _sortWords(String criterion) {
@@ -272,7 +290,6 @@ class _VocabularyListState extends State<VocabularyList> {
     );
   }
 
-
   void _showCopyDialog() {
     showDialog(
       context: context,
@@ -316,14 +333,53 @@ class _VocabularyListState extends State<VocabularyList> {
     );
   }
 
-
-
-
   void _deleteSelectedWords() {
     _selectedWords.forEach((id) {
       _deleteWord(id);
     });
     _toggleEditMode();
+  }
+
+  void _showEditDialog(BuildContext context, int id, String word, String meaning) {
+    _wordController.text = word;
+    _meaningController.text = meaning;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('단어 수정'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _wordController,
+                decoration: InputDecoration(labelText: '단어'),
+              ),
+              TextField(
+                controller: _meaningController,
+                decoration: InputDecoration(labelText: '뜻'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('취소'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _updateWord(id, _wordController.text, _meaningController.text);
+                Navigator.pop(context);
+              },
+              child: Text('저장'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showActionSheet(BuildContext buildContext, int id, String word, String meaning) {
@@ -340,7 +396,8 @@ class _VocabularyListState extends State<VocabularyList> {
                 title: Text('수정하기'),
                 onTap: () {
                   Navigator.pop(context);
-                  // 편집하기 로직 추가
+                  //편집 로직 showEditDialog 추가
+                  _showEditDialog(context, id, word, meaning);
                 },
               ),
               ListTile(
@@ -364,7 +421,7 @@ class _VocabularyListState extends State<VocabularyList> {
                 title: Text('이동하기'),
                 onTap: () {
                   Navigator.pop(context);
-                  _showMoveDialog();
+                  _moveWords(widget.listId);
                 },
               ),
             ],
@@ -435,9 +492,8 @@ class _VocabularyListState extends State<VocabularyList> {
                   _toggleEditMode();
                 } else if (result == '정렬하기') {
                   showSortMenu(context);
-                } else if (result == '랜덤섞기') {
+                } else if (result == '보기 설정') {
                   setState(() {
-                    words.shuffle();
                   });
                 }
               },
@@ -451,8 +507,8 @@ class _VocabularyListState extends State<VocabularyList> {
                   child: Text('정렬하기'),
                 ),
                 const PopupMenuItem<String>(
-                  value: '랜덤섞기',
-                  child: Text('랜덤섞기'),
+                  value: '보기 설정',
+                  child: Text('보기 설정'),
                 ),
               ],
             ),
