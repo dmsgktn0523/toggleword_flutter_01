@@ -165,6 +165,7 @@ class _VocabularyListState extends State<VocabularyList> {
         'id': e['id'].toString(),
         'word': e['word'] as String,
         'meaning': e['meaning'] as String,
+        'favorite': e['favorite'] != null ? e['favorite'].toString() : '0', // favorite 값을 올바르게 설정
       }).toList());
     });
   }
@@ -230,7 +231,16 @@ class _VocabularyListState extends State<VocabularyList> {
       where: 'id = ?',
       whereArgs: [id],
     );
-    _loadWords(widget.listId);
+
+    // words 리스트에서 해당 항목의 favorite 값을 변경합니다.
+    setState(() {
+      for (var word in words) {
+        if (word['id'] == id.toString()) {
+          word['favorite'] = newFavorite.toString();
+          break;
+        }
+      }
+    });
   }
 
 
@@ -246,6 +256,16 @@ class _VocabularyListState extends State<VocabularyList> {
         words.sort((a, b) => int.parse(b['id']!).compareTo(int.parse(a['id']!)));
       } else if (criterion == '랜덤순') {
         words.shuffle();
+      } else if (criterion == '즐겨찾기순') {
+        words.sort((a, b) {
+          int aFavorite = int.parse(a['favorite']! ?? '0');
+          int bFavorite = int.parse(b['favorite']! ?? '0');
+          if (aFavorite == bFavorite) {
+            return a['word']!.compareTo(b['word']!);
+          } else {
+            return bFavorite.compareTo(aFavorite);
+          }
+        });
       }
     });
   }
