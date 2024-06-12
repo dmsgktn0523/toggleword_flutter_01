@@ -6,7 +6,7 @@ import 'new_word_page.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as path_utils;
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+// import 'package:flutter_svg/flutter_svg.dart';
 
 
 void main() => runApp(MyAppWrapper());
@@ -123,11 +123,19 @@ class _VocabularyListState extends State<VocabularyList> {
       version: 1,
       onCreate: (Database db, int version) async {
         await db.execute(
-          'CREATE TABLE words (id INTEGER PRIMARY KEY AUTOINCREMENT, word TEXT, meaning TEXT, list_id INTEGER)',
+          'CREATE TABLE words (id INTEGER PRIMARY KEY AUTOINCREMENT, word TEXT, meaning TEXT, list_id INTEGER, favorite INTEGER)',
         );
+      },
+      onUpgrade: (Database db, int oldVersion, int newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute(
+            'ALTER TABLE words ADD COLUMN favorite INTEGER DEFAULT 0',
+          );
+        }
       },
     );
   }
+
 
   @override
   void initState() {
@@ -213,6 +221,18 @@ class _VocabularyListState extends State<VocabularyList> {
     );
     _loadWords(widget.listId);
   }
+
+  Future<void> _toggleFavorite(int id, int currentFavorite) async {
+    int newFavorite = currentFavorite == 1 ? 0 : 1;
+    await _database.update(
+      'words',
+      {'favorite': newFavorite},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    _loadWords(widget.listId);
+  }
+
 
   void _sortWords(String criterion) {
     setState(() {
@@ -472,7 +492,6 @@ class _VocabularyListState extends State<VocabularyList> {
           },
           child: Row(
             children: [
-              //Icon(Icons.arrow_back), // 뒤로 가기 화살표 아이콘
               SizedBox(width: 8.0), // 아이콘과 제목 사이의 간격
               Text(widget.listTitle), // listTitle을 표시
             ],
@@ -493,8 +512,7 @@ class _VocabularyListState extends State<VocabularyList> {
                 } else if (result == '정렬하기') {
                   showSortMenu(context);
                 } else if (result == '보기 설정') {
-                  setState(() {
-                  });
+                  setState(() {});
                 }
               },
               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -558,6 +576,7 @@ class _VocabularyListState extends State<VocabularyList> {
                 }
                 final int id = int.parse(idString);
                 final int wordNumber = index + 1;
+                final int favorite = words[index]['favorite'] == null ? 0 : int.parse(words[index]['favorite']!);
 
                 return Column(
                   children: [
@@ -613,14 +632,22 @@ class _VocabularyListState extends State<VocabularyList> {
                           },
                         ),
                       ),
+                      trailing: IconButton(
+                        icon: Icon(
+                          favorite == 1 ? Icons.star : Icons.star_border, // 변경된 아이콘
+                          color: favorite == 1 ? Colors.purple : null, // 색상을 보라색으로 변경
+                        ),
+                        onPressed: () {
+                          _toggleFavorite(id, favorite); // 아이콘 클릭 시 즐겨찾기 상태 변경
+                        },
+                      ),
                       onTap: () {
-                        _speak(words[index]['word'] ?? '');
+                        _speak(words[index]['word'] ?? ''); // 단어를 읽어주는 기능
                       },
                       onLongPress: () {
-                        _showActionSheet(context, id, words[index]['word'] ?? '', words[index]['meaning'] ?? '');
+                        _showActionSheet(context, id, words[index]['word'] ?? '', words[index]['meaning'] ?? ''); // 옵션 다이얼로그 표시
                       },
                     ),
-
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Divider(),
@@ -666,7 +693,6 @@ class _VocabularyListState extends State<VocabularyList> {
                         toggleSize: 20.0,
                         padding: 4.0,
                         activeColor: Colors.deepPurple,
-                        // showOnOff: true,
                         value: _isToggled,
                         onToggle: (val) {
                           setState(() {
@@ -684,6 +710,8 @@ class _VocabularyListState extends State<VocabularyList> {
       ),
     );
   }
+
+
 
   void showSortMenu(BuildContext context) {
     showMenu(
@@ -705,6 +733,10 @@ class _VocabularyListState extends State<VocabularyList> {
         PopupMenuItem<String>(
           value: '최신 저장순',
           child: Text('최신 저장순'),
+        ),
+        PopupMenuItem<String>(
+          value: '즐겨찾기순',
+          child: Text('즐겨찾기순'),
         ),
         PopupMenuItem<String>(
           value: '랜덤순',
