@@ -117,7 +117,8 @@ class _VocabularyListState extends State<VocabularyList> {
 
 
   Future<Database> initializeDB() async {
-    String path = path_utils.join(await getDatabasesPath(), 'word_database.db');
+    String databasesPath = await getDatabasesPath();
+    String path = path_utils.join(databasesPath, 'word_database.db');
     return openDatabase(
       path,
       version: 1,
@@ -135,6 +136,7 @@ class _VocabularyListState extends State<VocabularyList> {
       },
     );
   }
+
 
 
   @override
@@ -223,6 +225,8 @@ class _VocabularyListState extends State<VocabularyList> {
     _loadWords(widget.listId);
   }
 
+
+
   Future<void> _toggleFavorite(int id, int currentFavorite) async {
     int newFavorite = currentFavorite == 1 ? 0 : 1;
     await _database.update(
@@ -232,7 +236,6 @@ class _VocabularyListState extends State<VocabularyList> {
       whereArgs: [id],
     );
 
-    // words 리스트에서 해당 항목의 favorite 값을 변경합니다.
     setState(() {
       for (var word in words) {
         if (word['id'] == id.toString()) {
@@ -242,6 +245,8 @@ class _VocabularyListState extends State<VocabularyList> {
       }
     });
   }
+
+
 
 
   void _sortWords(String criterion) {
@@ -286,6 +291,9 @@ class _VocabularyListState extends State<VocabularyList> {
       }
     });
   }
+
+
+
 
   void _showMoveDialog() {
     showDialog(
