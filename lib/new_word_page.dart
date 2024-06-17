@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 
 class NewWordPage extends StatefulWidget {
-  final Function(String, String) onAddWord; // 인자 타입을 (Map<String, String>)에서 (String, String)로 변경
+  final Function(String, String) onAddWord;
 
   NewWordPage({Key? key, required this.onAddWord}) : super(key: key);
 
@@ -12,9 +12,6 @@ class NewWordPage extends StatefulWidget {
 }
 
 class _NewWordPageState extends State<NewWordPage> {
-
-
-
   final TextEditingController _wordController = TextEditingController();
   final TextEditingController _translationController = TextEditingController();
   final TextEditingController _multiWordController = TextEditingController();
@@ -23,9 +20,9 @@ class _NewWordPageState extends State<NewWordPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, // 두 개의 탭
+      length: 2,
       child: Scaffold(
-        resizeToAvoidBottomInset: false,  // Add this line to prevent UI adjustments
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           title: Text('단어 추가'),
           bottom: TabBar(
@@ -37,8 +34,8 @@ class _NewWordPageState extends State<NewWordPage> {
         ),
         body: TabBarView(
           children: [
-            simpleAddTab(), // 간단 추가 탭
-            multiAddTab(), // 멀티 추가 탭
+            simpleAddTab(),
+            multiAddTab(),
           ],
         ),
       ),
@@ -48,7 +45,6 @@ class _NewWordPageState extends State<NewWordPage> {
   Widget simpleAddTab() {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        // Calculate 10% of the screen height
         double topPadding = MediaQuery.of(context).size.height * 0.1;
 
         return SingleChildScrollView(
@@ -87,7 +83,7 @@ class _NewWordPageState extends State<NewWordPage> {
                   ),
                 ),
                 SizedBox(height: 20),
-                actionButtons(_wordController, _translationController),
+                actionButtons(_wordController, _translationController, isMulti: false),
               ],
             ),
           ),
@@ -96,46 +92,33 @@ class _NewWordPageState extends State<NewWordPage> {
     );
   }
 
-
-
-
   Widget multiAddTab() {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        // Calculate 50% of the screen height
         double topPadding = MediaQuery.of(context).size.height * 0.1;
 
         return SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.only(top: topPadding, left: 50.0, right: 50.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start, // Changed to start to respect top padding
+              mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 TextField(
                   controller: _multiWordController,
                   decoration: InputDecoration(
                     labelText: '여러 단어 입력',
-                    suffixIcon: IconButton(
-                      icon: Icon(Icons.search),
-                      onPressed: () {
-                        if (_multiWordController.text.isNotEmpty) {
-                          translateWord(_multiWordController.text, _multiTranslationController);
-                        }
-                      },
-                    ),
                     border: UnderlineInputBorder(),
                   ),
+                  minLines: 3,
+                  maxLines: 5,
                 ),
                 SizedBox(height: 20),
-                TextField(
-                  controller: _multiTranslationController,
-                  decoration: InputDecoration(
-                    labelText: "단어의 뜻",
-                    border: UnderlineInputBorder(),
-                  ),
+                Text(
+                  "여러 단어를 띄어쓰기로 구분하여 입력하면 한번에 저장됩니다.",
+                  style: TextStyle(fontSize: 12),
                 ),
                 SizedBox(height: 40),
-                actionButtons(_multiWordController, _multiTranslationController)
+                actionButtons(_multiWordController, _multiTranslationController, isMulti: true)
               ],
             ),
           ),
@@ -144,8 +127,7 @@ class _NewWordPageState extends State<NewWordPage> {
     );
   }
 
-
-  Widget actionButtons(TextEditingController wordController, TextEditingController translationController) {
+  Widget actionButtons(TextEditingController wordController, TextEditingController translationController, {bool isMulti = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -161,19 +143,22 @@ class _NewWordPageState extends State<NewWordPage> {
         ),
         ElevatedButton(
           onPressed: () {
-            // 키보드 감추기
-            // FocusScope.of(context).unfocus();
-            final word = wordController.text.trim();
-            final meaning = translationController.text.trim();
-
-            if (word.isEmpty) {
-              showSnackbar('단어를 입력해주세요! ⚠️', 1000);
-            } else {
-              widget.onAddWord(word, meaning);
-              showSnackbar('${word} 추가 완료 ✅',500);
-              wordController.clear();
-              translationController.clear();
+            final words = wordController.text.trim();
+            if (words.isEmpty) {
+              showSnackbar('단어를 입력해주세요! ⚠️', 500);
+              return;
             }
+
+            if (isMulti) {
+              translateMultipleWords(words);
+            } else {
+              final meaning = translationController.text.trim();
+              widget.onAddWord(words, meaning);
+              showSnackbar('${words} 추가 완료 ✅', 100);
+            }
+
+            wordController.clear();
+            translationController.clear();
           },
           child: Text('단어 추가', style: TextStyle(color: Colors.white)),
           style: ButtonStyle(
@@ -184,25 +169,24 @@ class _NewWordPageState extends State<NewWordPage> {
     );
   }
 
-  void showSnackbar(String message, int durationMillis) {  // durationMillis 파라미터 추가
+  void showSnackbar(String message, int durationMillis) {
     var keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          duration: Duration(milliseconds: durationMillis),  // milliseconds를 사용하여 지속 시간 설정
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.only(
-              bottom: keyboardHeight + 16, // 기본 마진에 키보드 높이를 추가합니다.
-              left: 16,
-              right: 16
-          ),
-        )
+    final snackBar = SnackBar(
+      content: Text(
+        message,
+        style: TextStyle(color: Colors.white),
+      ),
+      duration: Duration(milliseconds: durationMillis),
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.only(
+        bottom: keyboardHeight + 16,
+        left: 16,
+        right: 16,
+      ),
+      backgroundColor: Colors.black.withOpacity(0.8),
     );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
-
-
-
-
 
   void translateWord(String word, TextEditingController translationController) async {
     try {
@@ -216,6 +200,27 @@ class _NewWordPageState extends State<NewWordPage> {
       setState(() {
         translationController.text = "Translation failed.";
       });
+    }
+  }
+
+  void translateMultipleWords(String words) async {
+    List<String> wordList = words.split(' ');
+    for (String word in wordList) {
+      if (word.isNotEmpty) {
+        await translateAndAddWord(word);
+      }
+    }
+  }
+
+  Future<void> translateAndAddWord(String word) async {
+    try {
+      final response = await http.get(Uri.parse("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=0&ie=utf8&query=$word+%EB%9C%BB"));
+      var document = parse(response.body);
+      var translation = document.querySelector("p.mean.api_txt_lines")?.text ?? " ";
+      widget.onAddWord(word, translation);
+      showSnackbar('$word 추가 완료 ✅', 10);
+    } catch (e) {
+      showSnackbar('$word 번역 실패 ⚠️', 500);
     }
   }
 }
