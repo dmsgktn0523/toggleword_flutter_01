@@ -5,7 +5,7 @@ import 'package:html/parser.dart' show parse;
 class NewWordPage extends StatefulWidget {
   final Function(String, String) onAddWord;
 
-  NewWordPage({Key? key, required this.onAddWord}) : super(key: key);
+  const NewWordPage({super.key, required this.onAddWord});
 
   @override
   _NewWordPageState createState() => _NewWordPageState();
@@ -24,8 +24,8 @@ class _NewWordPageState extends State<NewWordPage> {
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          title: Text('단어 추가'),
-          bottom: TabBar(
+          title: const Text('단어 추가'),
+          bottom: const TabBar(
             tabs: [
               Tab(icon: Icon(Icons.add), text: '간단 추가'),
               Tab(icon: Icon(Icons.list), text: '멀티 추가'),
@@ -54,35 +54,35 @@ class _NewWordPageState extends State<NewWordPage> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 50.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 50.0),
                   child: TextField(
                     controller: _wordController,
                     decoration: InputDecoration(
                       labelText: '단어 입력',
                       suffixIcon: IconButton(
-                        icon: Icon(Icons.search),
+                        icon: const Icon(Icons.search),
                         onPressed: () {
                           if (_wordController.text.isNotEmpty) {
                             translateWord(_wordController.text, _translationController);
                           }
                         },
                       ),
-                      border: UnderlineInputBorder(),
+                      border: const UnderlineInputBorder(),
                     ),
                   ),
                 ),
-                SizedBox(height: 50),
+                const SizedBox(height: 50),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 50.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 50.0),
                   child: TextField(
                     controller: _translationController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: "단어의 뜻",
                       border: UnderlineInputBorder(),
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 actionButtons(_wordController, _translationController, isMulti: false),
               ],
             ),
@@ -105,19 +105,19 @@ class _NewWordPageState extends State<NewWordPage> {
               children: <Widget>[
                 TextField(
                   controller: _multiWordController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: '여러 단어 입력',
                     border: UnderlineInputBorder(),
                   ),
                   minLines: 3,
                   maxLines: 5,
                 ),
-                SizedBox(height: 20),
-                Text(
+                const SizedBox(height: 20),
+                const Text(
                   "여러 단어를 띄어쓰기로 구분하여 입력하면 한번에 저장됩니다.",
                   style: TextStyle(fontSize: 12),
                 ),
-                SizedBox(height: 40),
+                const SizedBox(height: 40),
                 actionButtons(_multiWordController, _multiTranslationController, isMulti: true)
               ],
             ),
@@ -135,11 +135,11 @@ class _NewWordPageState extends State<NewWordPage> {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: Text('돌아가기'),
           style: ButtonStyle(
             backgroundColor: MaterialStateProperty.all(Colors.grey),
             foregroundColor: MaterialStateProperty.all(Colors.white),
           ),
+          child: const Text('돌아가기'),
         ),
         ElevatedButton(
           onPressed: () {
@@ -154,16 +154,16 @@ class _NewWordPageState extends State<NewWordPage> {
             } else {
               final meaning = translationController.text.trim();
               widget.onAddWord(words, meaning);
-              showSnackbar('${words} 추가 완료 ✅', 100);
+              showSnackbar('$words 추가 완료 ✅', 100);
             }
 
             wordController.clear();
             translationController.clear();
           },
-          child: Text('단어 추가', style: TextStyle(color: Colors.white)),
           style: ButtonStyle(
             backgroundColor: MaterialStateProperty.all(Colors.deepPurple),
           ),
+          child: const Text('단어 추가', style: TextStyle(color: Colors.white)),
         ),
       ],
     );
@@ -174,7 +174,7 @@ class _NewWordPageState extends State<NewWordPage> {
     final snackBar = SnackBar(
       content: Text(
         message,
-        style: TextStyle(color: Colors.white),
+        style: const TextStyle(color: Colors.white),
       ),
       duration: Duration(milliseconds: durationMillis),
       behavior: SnackBarBehavior.floating,

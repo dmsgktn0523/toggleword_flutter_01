@@ -5,7 +5,7 @@ import 'package:toggleworld_flutter_01/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(MyAppWrapper());
+    await tester.pumpWidget(const MyAppWrapper());
 
     // Navigate to the test word list screen
     await tester.tap(find.text('테스트 단어장'));

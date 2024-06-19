@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'main.dart';
 
-void main() => runApp(MyAppWrapper());
+void main() => runApp(const MyAppWrapper());
 
 class MyAppWrapper extends StatelessWidget {
+  const MyAppWrapper({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       title: 'Word List Home',
       home: WordListLibrary(),
     );
@@ -14,6 +16,8 @@ class MyAppWrapper extends StatelessWidget {
 }
 
 class WordListLibrary extends StatefulWidget {
+  const WordListLibrary({super.key});
+
   @override
   _WordListLibraryState createState() => _WordListLibraryState();
 }
@@ -29,7 +33,7 @@ class _WordListLibraryState extends State<WordListLibrary> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           '🏠 단어장 홈',
           style: TextStyle(color: Colors.white),
         ),
@@ -45,7 +49,7 @@ class _WordListLibraryState extends State<WordListLibrary> {
                   child: ListTile(
                     title: Text(wordLists[index]['title']!),
                     subtitle: Text(wordLists[index]['description']!),
-                    leading: Icon(Icons.folder, color: Colors.deepPurple),
+                    leading: const Icon(Icons.folder, color: Colors.deepPurple),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -85,19 +89,19 @@ class _WordListLibraryState extends State<WordListLibrary> {
                     final descriptionController = TextEditingController();
 
                     return AlertDialog(
-                      title: Text('새 단어장 추가'),
+                      title: const Text('새 단어장 추가'),
                       content: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           TextField(
                             controller: titleController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               hintText: '단어장 제목',
                             ),
                           ),
                           TextField(
                             controller: descriptionController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               hintText: '단어장 설명',
                             ),
                           ),
@@ -108,7 +112,7 @@ class _WordListLibraryState extends State<WordListLibrary> {
                           onPressed: () {
                             Navigator.pop(context);
                           },
-                          child: Text('취소'),
+                          child: const Text('취소'),
                         ),
                         TextButton(
                           onPressed: () {
@@ -127,18 +131,18 @@ class _WordListLibraryState extends State<WordListLibrary> {
                               Navigator.pop(context);
                             }
                           },
-                          child: Text('추가'),
+                          child: const Text('추가'),
                         ),
                       ],
                     );
                   },
                 );
               },
-              child: Text('+ 새 단어장 추가'),
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all(Colors.deepPurple),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
               ),
+              child: const Text('+ 새 단어장 추가'),
             ),
           ),
         ],

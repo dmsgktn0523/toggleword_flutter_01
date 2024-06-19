@@ -9,12 +9,14 @@ import 'package:flutter_tts/flutter_tts.dart';
 // import 'package:flutter_svg/flutter_svg.dart';
 
 
-void main() => runApp(MyAppWrapper());
+void main() => runApp(const MyAppWrapper());
 
 class MyAppWrapper extends StatelessWidget {
+  const MyAppWrapper({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       home: WordListLibrary(),
     );
   }
@@ -25,7 +27,7 @@ class MyApp extends StatefulWidget {
   final int listId;
   final List<Map<String, String>> wordLists;
 
-  MyApp({required this.listTitle, required this.listId, required this.wordLists});
+  const MyApp({super.key, required this.listTitle, required this.listId, required this.wordLists});
 
   @override
   _MyAppState createState() => _MyAppState();
@@ -54,7 +56,7 @@ class _MyAppState extends State<MyApp> {
                   wordLists: widget.wordLists,
                   listTitle: widget.listTitle,
                 ),
-                DictionaryScreen(),
+                const DictionaryScreen(),
               ],
             ),
           ),
@@ -67,12 +69,12 @@ class _MyAppState extends State<MyApp> {
             _currentIndex = index;
             _pageController.animateToPage(
               index,
-              duration: Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
             );
           });
         },
-        items: [
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: '단어장',
@@ -93,7 +95,7 @@ class VocabularyList extends StatefulWidget {
   final List<Map<String, String>> wordLists;
   final String listTitle;
 
-  VocabularyList({required this.listId, required this.wordLists, required this.listTitle});
+  const VocabularyList({super.key, required this.listId, required this.wordLists, required this.listTitle});
 
   @override
   _VocabularyListState createState() => _VocabularyListState();
@@ -104,7 +106,7 @@ class _VocabularyListState extends State<VocabularyList> {
   late Database _database;
   bool _isToggled = false;
   bool _isEditing = false;
-  Set<int> _selectedWords = Set<int>();
+  final Set<int> _selectedWords = <int>{};
   late FlutterTts flutterTts;
   late TextEditingController _wordController;
   late TextEditingController _meaningController;
@@ -127,15 +129,9 @@ class _VocabularyListState extends State<VocabularyList> {
           'CREATE TABLE words (id INTEGER PRIMARY KEY AUTOINCREMENT, word TEXT, meaning TEXT, list_id INTEGER, favorite INTEGER)',
         );
       },
-      onUpgrade: (Database db, int oldVersion, int newVersion) async {
-        if (oldVersion < 2) {
-          await db.execute(
-            'ALTER TABLE words ADD COLUMN favorite INTEGER DEFAULT 0',
-          );
-        }
-      },
     );
   }
+
 
 
 
@@ -177,6 +173,7 @@ class _VocabularyListState extends State<VocabularyList> {
         'words', {'word': word, 'meaning': meaning, 'list_id': widget.listId});
     _loadWords(widget.listId);
   }
+
 
   Future<void> _deleteWord(int id) async {
     await _database.delete('words', where: 'id = ?', whereArgs: [id]);
@@ -301,7 +298,7 @@ class _VocabularyListState extends State<VocabularyList> {
       builder: (BuildContext context) {
         int? selectedListId;
         return AlertDialog(
-          title: Text('이동할 단어장 선택'),
+          title: const Text('이동할 단어장 선택'),
           content: DropdownButtonFormField<int>(
             value: selectedListId,
             items: widget.wordLists.map((list) {
@@ -321,7 +318,7 @@ class _VocabularyListState extends State<VocabularyList> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('취소'),
+              child: const Text('취소'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -330,7 +327,7 @@ class _VocabularyListState extends State<VocabularyList> {
                   Navigator.pop(context);
                 }
               },
-              child: Text('이동'),
+              child: const Text('이동'),
             ),
           ],
         );
@@ -344,7 +341,7 @@ class _VocabularyListState extends State<VocabularyList> {
       builder: (BuildContext context) {
         int? selectedListId;
         return AlertDialog(
-          title: Text('복사할 단어장 선택'),
+          title: const Text('복사할 단어장 선택'),
           content: DropdownButtonFormField<int>(
             value: selectedListId,
             items: widget.wordLists.map((list) {
@@ -364,7 +361,7 @@ class _VocabularyListState extends State<VocabularyList> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('취소'),
+              child: const Text('취소'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -373,7 +370,7 @@ class _VocabularyListState extends State<VocabularyList> {
                   Navigator.pop(context);
                 }
               },
-              child: Text('복사'),
+              child: const Text('복사'),
             ),
           ],
         );
@@ -382,9 +379,9 @@ class _VocabularyListState extends State<VocabularyList> {
   }
 
   void _deleteSelectedWords() {
-    _selectedWords.forEach((id) {
+    for (var id in _selectedWords) {
       _deleteWord(id);
-    });
+    }
     _toggleEditMode();
   }
 
@@ -396,17 +393,17 @@ class _VocabularyListState extends State<VocabularyList> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('단어 수정'),
+          title: const Text('단어 수정'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: _wordController,
-                decoration: InputDecoration(labelText: '단어'),
+                decoration: const InputDecoration(labelText: '단어'),
               ),
               TextField(
                 controller: _meaningController,
-                decoration: InputDecoration(labelText: '뜻'),
+                decoration: const InputDecoration(labelText: '뜻'),
               ),
             ],
           ),
@@ -415,14 +412,14 @@ class _VocabularyListState extends State<VocabularyList> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('취소'),
+              child: const Text('취소'),
             ),
             ElevatedButton(
               onPressed: () {
                 _updateWord(id, _wordController.text, _meaningController.text);
                 Navigator.pop(context);
               },
-              child: Text('저장'),
+              child: const Text('저장'),
             ),
           ],
         );
@@ -435,13 +432,13 @@ class _VocabularyListState extends State<VocabularyList> {
       context: buildContext,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('옵션 선택'),
+          title: const Text('옵션 선택'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.edit),
-                title: Text('수정하기'),
+                leading: const Icon(Icons.edit),
+                title: const Text('수정하기'),
                 onTap: () {
                   Navigator.pop(context);
                   //편집 로직 showEditDialog 추가
@@ -449,24 +446,24 @@ class _VocabularyListState extends State<VocabularyList> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.delete),
-                title: Text('삭제하기'),
+                leading: const Icon(Icons.delete),
+                title: const Text('삭제하기'),
                 onTap: () {
                   Navigator.pop(context);
                   _deleteWord(id);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.copy),
-                title: Text('복사하기'),
+                leading: const Icon(Icons.copy),
+                title: const Text('복사하기'),
                 onTap: () {
                   Navigator.pop(context);
                   _copyWords(widget.listId); // 예를 들어 현재 목록 ID로 복사하려면 widget.listId를 사용
                 },
               ),
               ListTile(
-                leading: Icon(Icons.move_to_inbox),
-                title: Text('이동하기'),
+                leading: const Icon(Icons.move_to_inbox),
+                title: const Text('이동하기'),
                 onTap: () {
                   Navigator.pop(context);
                   _moveWords(widget.listId);
@@ -476,7 +473,7 @@ class _VocabularyListState extends State<VocabularyList> {
           ),
           actions: [
             TextButton(
-              child: Text('취소'),
+              child: const Text('취소'),
               onPressed: () {
                 Navigator.pop(context);
               },
@@ -502,7 +499,7 @@ class _VocabularyListState extends State<VocabularyList> {
             Navigator.push(
               context,
               PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => WordListLibrary(),
+                pageBuilder: (context, animation, secondaryAnimation) => const WordListLibrary(),
                 transitionsBuilder: (context, animation, secondaryAnimation, child) {
                   const begin = Offset(-1.0, 0.0); // 오른쪽에서 왼쪽으로 애니메이션
                   const end = Offset.zero;
@@ -520,16 +517,16 @@ class _VocabularyListState extends State<VocabularyList> {
           },
           child: Row(
             children: [
-              SizedBox(width: 8.0), // 아이콘과 제목 사이의 간격
+              const SizedBox(width: 8.0), // 아이콘과 제목 사이의 간격
               Text(widget.listTitle), // listTitle을 표시
             ],
           ),
         ),
-        iconTheme: IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: <Widget>[
           if (_isEditing)
             IconButton(
-              icon: Icon(Icons.close),
+              icon: const Icon(Icons.close),
               onPressed: _toggleEditMode,
             ),
           if (!_isEditing)
@@ -570,15 +567,15 @@ class _VocabularyListState extends State<VocabularyList> {
                 children: [
                   ElevatedButton(
                     onPressed: _selectedWords.isEmpty ? null : _showMoveDialog,
-                    child: Text('이동하기'),
+                    child: const Text('이동하기'),
                   ),
                   ElevatedButton(
                     onPressed: _selectedWords.isEmpty ? null : _showCopyDialog,
-                    child: Text('복사하기'),
+                    child: const Text('복사하기'),
                   ),
                   ElevatedButton(
                     onPressed: _selectedWords.isEmpty ? null : _deleteSelectedWords,
-                    child: Text('삭제하기'),
+                    child: const Text('삭제하기'),
                   ),
                 ],
               ),
@@ -589,14 +586,14 @@ class _VocabularyListState extends State<VocabularyList> {
               itemBuilder: (context, index) {
                 final String? idString = words[index]['id'];
                 if (idString == null) {
-                  return Column(
+                  return const Column(
                     children: [
                       ListTile(
                         title: Text('No ID found'),
                         subtitle: Text('This word has no ID.'),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: EdgeInsets.symmetric(horizontal: 16.0),
                         child: Divider(),
                       ),
                     ],
@@ -623,20 +620,20 @@ class _VocabularyListState extends State<VocabularyList> {
                             radius: 10.0,
                             child: Text(
                               '$wordNumber',
-                              style: TextStyle(fontSize: 12.0),
+                              style: const TextStyle(fontSize: 12.0),
                             ),
                           ),
-                          SizedBox(width: 8.0),
+                          const SizedBox(width: 8.0),
                           Text(words[index]['word'] ?? ''),
                         ],
                       ),
                       subtitle: Padding(
-                        padding: EdgeInsets.only(left: 28.0),
+                        padding: const EdgeInsets.only(left: 28.0),
                         child: LayoutBuilder(
                           builder: (context, constraints) {
                             TextSpan span = TextSpan(
                               text: words[index]['meaning'] ?? '',
-                              style: TextStyle(color: Colors.black),
+                              style: const TextStyle(color: Colors.black),
                             );
 
                             TextPainter tp = TextPainter(
@@ -676,8 +673,8 @@ class _VocabularyListState extends State<VocabularyList> {
                         _showActionSheet(context, id, words[index]['word'] ?? '', words[index]['meaning'] ?? ''); // 옵션 다이얼로그 표시
                       },
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
                       child: Divider(),
                     ),
                   ],
@@ -704,11 +701,11 @@ class _VocabularyListState extends State<VocabularyList> {
                       ),
                     );
                   },
-                  child: Text('+ 단어 추가하기'),
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all(Colors.deepPurple),
                     foregroundColor: MaterialStateProperty.all(Colors.white),
                   ),
+                  child: const Text('+ 단어 추가하기'),
                 ),
                 Expanded(
                   child: Row(
@@ -744,29 +741,29 @@ class _VocabularyListState extends State<VocabularyList> {
   void showSortMenu(BuildContext context) {
     showMenu(
       context: context,
-      position: RelativeRect.fromLTRB(200, 50, 0, 0),
+      position: const RelativeRect.fromLTRB(200, 50, 0, 0),
       items: [
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'A-Z 순',
           child: Text('A-Z 순'),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'Z-A 순',
           child: Text('Z-A 순'),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: '오래된순',
           child: Text('오래된순'),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: '최신 저장순',
           child: Text('최신 저장순'),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: '즐겨찾기순',
           child: Text('즐겨찾기순'),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: '랜덤순',
           child: Text('랜덤순'),
         ),
@@ -780,6 +777,8 @@ class _VocabularyListState extends State<VocabularyList> {
 }
 
 class CustomWebView extends StatefulWidget {
+  const CustomWebView({super.key});
+
   @override
   _CustomWebViewState createState() => _CustomWebViewState();
 }
@@ -800,20 +799,24 @@ class _CustomWebViewState extends State<CustomWebView> {
 }
 
 class DictionaryScreen extends StatelessWidget {
+  const DictionaryScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return CustomWebView();
+    return const CustomWebView();
   }
 }
 
 class NewPage extends StatelessWidget {
+  const NewPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('New Page'),
+        title: const Text('New Page'),
       ),
-      body: Center(
+      body: const Center(
         child: Text('This is a new page'),
       ),
     );
