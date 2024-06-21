@@ -111,11 +111,22 @@ class _VocabularyListState extends State<VocabularyList> {
   late TextEditingController _wordController;
   late TextEditingController _meaningController;
 
-  Future<void> _speak(String text) async {
+  Future<void> _speak(String text, String meaning) async {
     await flutterTts.setLanguage("en-US");
     await flutterTts.setPitch(1.0);
     await flutterTts.speak(text);
+
+    // Check if meaning is not empty or whitespace
+    if (_isToggled && meaning.trim().isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(meaning),
+          duration: const Duration(milliseconds: 500), // Snackbar duration set to 500 milliseconds
+        ),
+      );
+    }
   }
+
 
 
   Future<Database> initializeDB() async {
@@ -667,7 +678,7 @@ class _VocabularyListState extends State<VocabularyList> {
                         },
                       ),
                       onTap: () {
-                        _speak(words[index]['word'] ?? ''); // 단어를 읽어주는 기능
+                        _speak(words[index]['word'] ?? '', words[index]['meaning'] ?? ''); // Pass both word and meaning
                       },
                       onLongPress: () {
                         _showActionSheet(context, id, words[index]['word'] ?? '', words[index]['meaning'] ?? ''); // 옵션 다이얼로그 표시
@@ -798,14 +809,26 @@ class _CustomWebViewState extends State<CustomWebView> {
   }
 }
 
-class DictionaryScreen extends StatelessWidget {
+class DictionaryScreen extends StatefulWidget {
   const DictionaryScreen({super.key});
 
   @override
+  _DictionaryScreenState createState() => _DictionaryScreenState();
+}
+
+class _DictionaryScreenState extends State<DictionaryScreen> {
+  @override
   Widget build(BuildContext context) {
-    return const CustomWebView();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('영어사전'),
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
+      body: const CustomWebView(),
+    );
   }
 }
+
 
 class NewPage extends StatelessWidget {
   const NewPage({super.key});

@@ -29,6 +29,69 @@ class _WordListLibraryState extends State<WordListLibrary> {
     {'id': '3', 'title': 'Technical Terms', 'description': 'Vocabulary for technical and scientific terms.'},
   ];
 
+  void _showEditDeleteDialog(int index) {
+    final titleController = TextEditingController(text: wordLists[index]['title']);
+    final descriptionController = TextEditingController(text: wordLists[index]['description']);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('편집 / 삭제'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  hintText: '단어장 제목',
+                ),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(
+                  hintText: '단어장 설명',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                final title = titleController.text;
+                final description = descriptionController.text;
+
+                if (title.isNotEmpty && description.isNotEmpty) {
+                  setState(() {
+                    wordLists[index]['title'] = title;
+                    wordLists[index]['description'] = description;
+                  });
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('저장'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  wordLists.removeAt(index);
+                });
+                Navigator.pop(context);
+              },
+              child: const Text('삭제'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,12 +117,11 @@ class _WordListLibraryState extends State<WordListLibrary> {
                       Navigator.push(
                         context,
                         PageRouteBuilder(
-                          pageBuilder: (context, animation, secondaryAnimation) =>
-                              MyApp(
-                                listTitle: wordLists[index]['title']!,
-                                listId: int.parse(wordLists[index]['id']!),
-                                wordLists: wordLists, // wordLists 전달
-                              ),
+                          pageBuilder: (context, animation, secondaryAnimation) => MyApp(
+                            listTitle: wordLists[index]['title']!,
+                            listId: int.parse(wordLists[index]['id']!),
+                            wordLists: wordLists,
+                          ),
                           transitionsBuilder: (context, animation, secondaryAnimation, child) {
                             const begin = Offset(1.0, 0.0);
                             const end = Offset.zero;
@@ -72,6 +134,9 @@ class _WordListLibraryState extends State<WordListLibrary> {
                           },
                         ),
                       );
+                    },
+                    onLongPress: () {
+                      _showEditDeleteDialog(index);
                     },
                   ),
                 );
