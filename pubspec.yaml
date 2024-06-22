@@ -40,6 +40,8 @@ dependencies:
   flutter_switch: ^0.3.2
 #  flutter_tts: ^3.8.2
   flutter_tts: ^4.0.2
+  shared_preferences: ^2.0.13
+
 
 
 
