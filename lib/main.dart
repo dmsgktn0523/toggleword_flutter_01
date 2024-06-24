@@ -211,7 +211,7 @@ class _VocabularyListState extends State<VocabularyList> {
 
       if (queryResult.isNotEmpty) {
         final wordData = queryResult.first;
-        // Insert the word into the target list
+        // Insert the word into the target list with a new ID
         await _database.insert('words', {
           'word': wordData['word'],
           'meaning': wordData['meaning'],
@@ -222,6 +222,7 @@ class _VocabularyListState extends State<VocabularyList> {
     _loadWords(widget.listId);
     _toggleEditMode();
   }
+
 
   Future<void> _updateWord(int id, String newWord, String newMeaning) async {
     await _database.update(
