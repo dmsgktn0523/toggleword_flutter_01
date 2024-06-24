@@ -6,7 +6,7 @@
 
 
     <application
-        android:label="toggleworld_flutter_01"
+        android:label="toggle"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
