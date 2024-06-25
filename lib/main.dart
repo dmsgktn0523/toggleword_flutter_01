@@ -577,6 +577,19 @@ class _VocabularyListState extends State<VocabularyList> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
+                  // Add the Select All Checkbox
+                  Checkbox(
+                    value: _selectedWords.length == words.length,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        if (value == true) {
+                          _selectedWords.addAll(words.map((word) => int.parse(word['id']!)));
+                        } else {
+                          _selectedWords.clear();
+                        }
+                      });
+                    },
+                  ),
                   ElevatedButton(
                     onPressed: _selectedWords.isEmpty ? null : _showMoveDialog,
                     child: const Text('이동하기'),
